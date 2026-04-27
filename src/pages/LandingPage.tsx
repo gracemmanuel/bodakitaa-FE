@@ -8,6 +8,7 @@ import {
   Instagram, Twitter, Facebook, ArrowUpRight, Activity, Award
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
+import bodasImage from '../assets/bodas.jpeg';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -84,11 +85,11 @@ const HeroSection: React.FC = () => {
   useEffect(() => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline();
-      tl.from(".hero-badge", { y: 20, opacity: 0, duration: 0.6, ease: "back.out(1.7)" })
-        .from(".hero-title span", { y: 100, opacity: 0, duration: 0.8, stagger: 0.1, ease: "power4.out" }, "-=0.2")
-        .from(".hero-subtitle", { y: 30, opacity: 0, duration: 0.8, ease: "power3.out" }, "-=0.4")
-        .from(".hero-cta", { y: 20, opacity: 0, duration: 0.6, stagger: 0.2, ease: "power2.out" }, "-=0.4")
-        .from(".hero-graphic", { scale: 0.8, opacity: 0, rotation: 5, duration: 1.2, ease: "elastic.out(1, 0.7)" }, "-=1");
+      tl.fromTo(".hero-badge", { y: 20, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.6, ease: "back.out(1.7)" })
+        .fromTo(".hero-title span", { y: 100, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.8, stagger: 0.1, ease: "power4.out" }, "-=0.2")
+        .fromTo(".hero-subtitle", { y: 30, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.8, ease: "power3.out" }, "-=0.4")
+        .fromTo(".hero-cta", { y: 20, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.6, stagger: 0.2, ease: "power2.out" }, "-=0.4")
+        .fromTo(".hero-graphic", { scale: 0.8, autoAlpha: 0, rotation: 5 }, { scale: 1, autoAlpha: 1, rotation: 0, duration: 1.2, ease: "elastic.out(1, 0.7)" }, "-=1");
 
       gsap.to(".floating-element", {
         y: -20,
@@ -167,7 +168,7 @@ const HeroSection: React.FC = () => {
         <div className="hero-graphic relative hidden lg:block">
           <div className="absolute inset-0 bg-gradient-to-tr from-primary-light/20 to-transparent rounded-[3rem] transform rotate-3 scale-105 blur-lg" />
           <div className="relative glass p-2 rounded-[3rem] border border-white/20 shadow-2xl backdrop-blur-xl overflow-hidden aspect-[4/5] flex items-center justify-center bg-slate-900/50">
-            <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1558981806-ec527fa84c39?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center opacity-40 mix-blend-overlay" />
+            <div className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-overlay" style={{ backgroundImage: `url(${bodasImage})` }} />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
             
             {/* Floating UI Elements within Graphic */}
@@ -204,50 +205,74 @@ const FeatureSection: React.FC = () => {
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      gsap.from(".feature-card", {
+      // Attractive Animated Background Blobs
+      gsap.to(".bg-blob", {
+        x: "random(-50, 50)",
+        y: "random(-50, 50)",
+        rotation: "random(-20, 20)",
+        scale: "random(0.8, 1.2)",
+        duration: "random(4, 8)",
+        repeat: -1,
+        yoyo: true,
+        ease: "sine.inOut",
+        stagger: { amount: 2, from: "random" }
+      });
+
+      // Synchronized ScrollTrigger for headers and cards to prevent gaps
+      const tl = gsap.timeline({
         scrollTrigger: {
           trigger: containerRef.current,
-          start: "top 80%",
-        },
-        y: 100,
-        opacity: 0,
-        duration: 0.8,
-        stagger: 0.15,
-        ease: "back.out(1.5)"
+          start: "top 95%", // Early trigger
+        }
       });
-      
-      gsap.from(".feature-header", {
-        scrollTrigger: {
-          trigger: containerRef.current,
-          start: "top 90%",
-        },
-        y: 50,
-        opacity: 0,
-        duration: 0.8
-      });
+
+      tl.fromTo(".feature-header", 
+        { y: 50, autoAlpha: 0 },
+        { y: 0, autoAlpha: 1, duration: 0.8 }
+      )
+      .fromTo(".feature-card", 
+        { y: 80, autoAlpha: 0 },
+        { y: 0, autoAlpha: 1, duration: 0.8, stagger: 0.15, ease: "back.out(1.5)" },
+        "-=0.4"
+      );
     }, containerRef);
     return () => ctx.revert();
   }, []);
 
   return (
-    <section ref={containerRef} id="features" className="py-32 px-6 bg-slate-50 dark:bg-black relative">
-      <div className="max-w-7xl mx-auto">
-        <div className="feature-header text-center max-w-3xl mx-auto mb-20 space-y-6">
-          <h2 className="text-primary-light font-black tracking-widest uppercase text-sm">Why Choose Us</h2>
-          <h3 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white leading-tight">Engineered for Reliability and Scale</h3>
-          <p className="text-lg text-slate-600 dark:text-slate-400 font-light">
+    <section ref={containerRef} id="features" className="py-32 px-6 bg-slate-50 dark:bg-slate-950 relative overflow-hidden">
+      {/* Decorative Background Patterns to fill space attractively */}
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+        <div className="bg-blob absolute top-[10%] left-[5%] w-[400px] h-[400px] bg-primary-light/10 dark:bg-primary-light/5 rounded-full blur-[80px]" />
+        <div className="bg-blob absolute top-[60%] right-[10%] w-[500px] h-[500px] bg-amber-500/10 dark:bg-amber-500/5 rounded-full blur-[100px]" />
+        <div className="bg-blob absolute bottom-[5%] left-[30%] w-[600px] h-[600px] bg-blue-500/5 dark:bg-blue-500/5 rounded-full blur-[120px]" />
+        {/* Subtle dot pattern */}
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9InJnYmEoMTQ4LCAxNjMsIDE4NCwgMC4xNSkiLz48L3N2Zz4=')] opacity-50 dark:opacity-20" />
+      </div>
+
+      <div className="max-w-7xl mx-auto relative z-10">
+        <div className="feature-header text-center max-w-3xl mx-auto mb-24 space-y-6">
+          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full glass border border-primary-light/20 text-xs font-bold uppercase tracking-widest text-primary-light mb-4 shadow-[0_0_20px_rgba(254,119,67,0.1)]">
+            <Zap size={16} className="animate-pulse" /> Why Choose Us
+          </div>
+          <h3 className="text-4xl md:text-5xl lg:text-6xl font-black text-slate-900 dark:text-white leading-tight">Engineered for Reliability and Scale</h3>
+          <p className="text-lg text-slate-600 dark:text-slate-400 font-light max-w-2xl mx-auto">
             We've built a platform that not only connects passengers with riders but also empowers fleet owners with unprecedented control and analytics.
           </p>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {featuresData.map((feature) => (
-            <div key={feature.id} className="feature-card premium-card bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 group hover:-translate-y-2 hover:shadow-2xl hover:shadow-primary-light/10 transition-all duration-500">
-              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-8 transform group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500 shadow-inner bg-slate-100 dark:bg-black/50 ${feature.color}`}>
-                <feature.icon size={32} strokeWidth={1.5} />
+            <div key={feature.id} className="feature-card glass bg-white/70 dark:bg-slate-900/40 backdrop-blur-xl border border-white/50 dark:border-white/10 rounded-[2.5rem] p-10 group hover:-translate-y-3 hover:shadow-[0_30px_60px_-15px_rgba(254,119,67,0.15)] dark:hover:shadow-[0_30px_60px_-15px_rgba(254,119,67,0.1)] transition-all duration-500 relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-transparent via-primary-light to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              
+              <div className={`w-20 h-20 rounded-3xl flex items-center justify-center mb-8 transform group-hover:scale-110 group-hover:rotate-6 transition-transform duration-500 shadow-lg bg-white dark:bg-black/50 ${feature.color} relative border border-slate-100 dark:border-white/5`}>
+                <div className="absolute inset-0 bg-current opacity-10 rounded-3xl group-hover:opacity-20 transition-opacity" />
+                <feature.icon size={36} strokeWidth={1.5} />
               </div>
-              <h4 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">{feature.titleKey}</h4>
-              <p className="text-slate-600 dark:text-slate-400 leading-relaxed font-light">
+              
+              <h4 className="text-2xl font-black mb-4 text-slate-900 dark:text-white group-hover:text-primary-light transition-colors">{feature.titleKey}</h4>
+              <p className="text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
                 {feature.descKey}
               </p>
             </div>
@@ -263,17 +288,20 @@ const StatsSection: React.FC = () => {
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      gsap.from(".stat-item", {
-        scrollTrigger: {
-          trigger: containerRef.current,
-          start: "top 75%",
-        },
-        scale: 0.5,
-        opacity: 0,
-        duration: 1,
-        stagger: 0.2,
-        ease: "elastic.out(1, 0.5)"
-      });
+      gsap.fromTo(".stat-item", 
+        { scale: 0.5, autoAlpha: 0 },
+        {
+          scrollTrigger: {
+            trigger: containerRef.current,
+            start: "top 75%",
+          },
+          scale: 1,
+          autoAlpha: 1,
+          duration: 1,
+          stagger: 0.2,
+          ease: "elastic.out(1, 0.5)"
+        }
+      );
     }, containerRef);
     return () => ctx.revert();
   }, []);
@@ -309,14 +337,20 @@ const AppInterfacePreview: React.FC = () => {
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      gsap.from(".mockup", {
-        scrollTrigger: { trigger: containerRef.current, start: "top 70%" },
-        y: 150, opacity: 0, duration: 1.2, ease: "power4.out"
-      });
-      gsap.from(".mockup-feature", {
-        scrollTrigger: { trigger: containerRef.current, start: "top 60%" },
-        x: 50, opacity: 0, duration: 0.8, stagger: 0.2, ease: "power2.out"
-      });
+      gsap.fromTo(".mockup", 
+        { y: 150, autoAlpha: 0 },
+        {
+          scrollTrigger: { trigger: containerRef.current, start: "top 70%" },
+          y: 0, autoAlpha: 1, duration: 1.2, ease: "power4.out"
+        }
+      );
+      gsap.fromTo(".mockup-feature", 
+        { x: 50, autoAlpha: 0 },
+        {
+          scrollTrigger: { trigger: containerRef.current, start: "top 60%" },
+          x: 0, autoAlpha: 1, duration: 0.8, stagger: 0.2, ease: "power2.out"
+        }
+      );
     }, containerRef);
     return () => ctx.revert();
   }, []);
