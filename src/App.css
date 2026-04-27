@@ -1,0 +1,4 @@
+/* App specific styles if needed beyond tailwind */
+.glass-effect {
+  @apply bg-white/5 backdrop-blur-xl border border-white/10;
+}

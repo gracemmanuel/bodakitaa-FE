@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --primary: #FE7743;
+    --secondary: #EFEEEA;
+    --bg-main: #FFFFFF;
+    --text-main: #1A1A1A;
+  }
+
+  .dark {
+    --primary: #273F4F;
+    --secondary: #000000;
+    --bg-main: #000000;
+    --text-main: #F9F9F9;
+  }
+
+  body {
+    @apply transition-colors duration-300 bg-[var(--bg-main)] text-[var(--text-main)];
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply backdrop-blur-md bg-white/10 border border-white/20 shadow-xl;
+  }
+  
+  .dark .glass {
+    @apply bg-black/30 border-white/5;
+  }
+
+  .premium-btn {
+    @apply px-6 py-2.5 rounded-full font-bold transition-all duration-300 transform hover:scale-105 active:scale-95;
+  }
+
+  .premium-card {
+    @apply glass rounded-3xl p-6 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1;
+  }
+}
+
+/* GSAP Helper Classes */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+}
