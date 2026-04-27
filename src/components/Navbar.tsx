@@ -31,7 +31,7 @@ const Navbar: React.FC = () => {
             <Globe size={18} />
             <span className="text-xs font-bold uppercase">{i18n.language}</span>
           </button>
-          
+
           <button onClick={toggleTheme} className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-full transition-colors text-slate-700 dark:text-white">
             {isDark ? <Sun size={18} /> : <Moon size={18} />}
           </button>
@@ -39,7 +39,7 @@ const Navbar: React.FC = () => {
           <Link to="/login" className="premium-btn text-sm border-2 border-primary-light text-primary-light hover:bg-primary-light hover:text-white bg-transparent">
             {t('nav.login')}
           </Link>
-          
+
           <Link to="/register" className="premium-btn text-sm bg-primary-light text-white hover:opacity-90 shadow-lg shadow-primary-light/30 border-2 border-primary-light">
             {t('nav.register')}
           </Link>

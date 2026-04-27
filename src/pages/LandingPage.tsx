@@ -2,9 +2,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { 
-  Shield, Zap, TrendingUp, Users, Bike, Star, ArrowRight, CheckCircle, 
-  MapPin, Clock, Smartphone, Globe, ChevronDown, PhoneCall, Mail, 
+import {
+  Shield, Zap, TrendingUp, Users, Bike, Star, ArrowRight, CheckCircle,
+  MapPin, Clock, Smartphone, Globe, ChevronDown, PhoneCall, Mail,
   Instagram, Twitter, Facebook, ArrowUpRight, Activity, Award
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
@@ -111,7 +111,7 @@ const HeroSection: React.FC = () => {
         <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-primary-light/10 rounded-full blur-[100px] mix-blend-screen" />
         <div className="absolute bottom-[-10%] left-[-10%] w-[800px] h-[800px] bg-primary-dark/20 rounded-full blur-[120px] mix-blend-screen" />
         <div className="absolute top-[30%] left-[20%] w-[300px] h-[300px] bg-amber-500/10 rounded-full blur-[80px]" />
-        
+
         {/* Abstract Grid */}
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAwIDEwIEwgNDAgMTAgTSAxMCAwIEwgMTAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsIDI1NSwgMjU1LCAwLjAzKSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-50" />
       </div>
@@ -125,17 +125,17 @@ const HeroSection: React.FC = () => {
             </span>
             The Future of Urban Mobility
           </div>
-          
+
           <h1 className="hero-title text-6xl sm:text-7xl lg:text-8xl font-black leading-[1.1] tracking-tight text-transparent bg-clip-text bg-gradient-to-br from-white to-white/60 dark:from-white dark:to-slate-400">
             <span className="block">Smart</span>
             <span className="block text-primary-light">Transport</span>
             <span className="block">Ecosystem</span>
           </h1>
-          
+
           <p className="hero-subtitle text-xl sm:text-2xl text-slate-600 dark:text-slate-300 max-w-xl font-light leading-relaxed">
             {t('hero.subtitle')} Experience seamless ride-hailing, transparent pricing, and advanced fleet management in one revolutionary platform.
           </p>
-          
+
           <div className="flex flex-col sm:flex-row gap-5">
             <button className="hero-cta premium-btn bg-primary-light text-white text-lg px-8 py-5 flex items-center justify-center gap-3 shadow-[0_20px_40px_-15px_rgba(254,119,67,0.5)] group overflow-hidden relative">
               <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out" />
@@ -170,7 +170,7 @@ const HeroSection: React.FC = () => {
           <div className="relative glass p-2 rounded-[3rem] border border-white/20 shadow-2xl backdrop-blur-xl overflow-hidden aspect-[4/5] flex items-center justify-center bg-slate-900/50">
             <div className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-overlay" style={{ backgroundImage: `url(${bodasImage})` }} />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-            
+
             {/* Floating UI Elements within Graphic */}
             <div className="floating-element absolute top-10 left-10 glass p-4 rounded-2xl border border-white/10 flex items-center gap-4 shadow-xl">
               <div className="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center text-green-500">
@@ -183,7 +183,7 @@ const HeroSection: React.FC = () => {
             </div>
 
             <div className="floating-element absolute bottom-20 right-10 glass p-4 rounded-2xl border border-white/10 flex items-center gap-4 shadow-xl" style={{ animationDelay: '1s' }}>
-               <div className="w-12 h-12 bg-primary-light/20 rounded-xl flex items-center justify-center text-primary-light">
+              <div className="w-12 h-12 bg-primary-light/20 rounded-xl flex items-center justify-center text-primary-light">
                 <Shield size={24} />
               </div>
               <div>
@@ -226,15 +226,15 @@ const FeatureSection: React.FC = () => {
         }
       });
 
-      tl.fromTo(".feature-header", 
+      tl.fromTo(".feature-header",
         { y: 50, autoAlpha: 0 },
         { y: 0, autoAlpha: 1, duration: 0.8 }
       )
-      .fromTo(".feature-card", 
-        { y: 80, autoAlpha: 0 },
-        { y: 0, autoAlpha: 1, duration: 0.8, stagger: 0.15, ease: "back.out(1.5)" },
-        "-=0.4"
-      );
+        .fromTo(".feature-card",
+          { y: 80, autoAlpha: 0 },
+          { y: 0, autoAlpha: 1, duration: 0.8, stagger: 0.15, ease: "back.out(1.5)" },
+          "-=0.4"
+        );
     }, containerRef);
     return () => ctx.revert();
   }, []);
@@ -265,12 +265,12 @@ const FeatureSection: React.FC = () => {
           {featuresData.map((feature) => (
             <div key={feature.id} className="feature-card glass bg-white/70 dark:bg-slate-900/40 backdrop-blur-xl border border-white/50 dark:border-white/10 rounded-[2.5rem] p-10 group hover:-translate-y-3 hover:shadow-[0_30px_60px_-15px_rgba(254,119,67,0.15)] dark:hover:shadow-[0_30px_60px_-15px_rgba(254,119,67,0.1)] transition-all duration-500 relative overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-transparent via-primary-light to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              
+
               <div className={`w-20 h-20 rounded-3xl flex items-center justify-center mb-8 transform group-hover:scale-110 group-hover:rotate-6 transition-transform duration-500 shadow-lg bg-white dark:bg-black/50 ${feature.color} relative border border-slate-100 dark:border-white/5`}>
                 <div className="absolute inset-0 bg-current opacity-10 rounded-3xl group-hover:opacity-20 transition-opacity" />
                 <feature.icon size={36} strokeWidth={1.5} />
               </div>
-              
+
               <h4 className="text-2xl font-black mb-4 text-slate-900 dark:text-white group-hover:text-primary-light transition-colors">{feature.titleKey}</h4>
               <p className="text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
                 {feature.descKey}
@@ -288,7 +288,7 @@ const StatsSection: React.FC = () => {
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      gsap.fromTo(".stat-item", 
+      gsap.fromTo(".stat-item",
         { scale: 0.5, autoAlpha: 0 },
         {
           scrollTrigger: {
@@ -337,14 +337,14 @@ const AppInterfacePreview: React.FC = () => {
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      gsap.fromTo(".mockup", 
+      gsap.fromTo(".mockup",
         { y: 150, autoAlpha: 0 },
         {
           scrollTrigger: { trigger: containerRef.current, start: "top 70%" },
           y: 0, autoAlpha: 1, duration: 1.2, ease: "power4.out"
         }
       );
-      gsap.fromTo(".mockup-feature", 
+      gsap.fromTo(".mockup-feature",
         { x: 50, autoAlpha: 0 },
         {
           scrollTrigger: { trigger: containerRef.current, start: "top 60%" },
@@ -364,20 +364,20 @@ const AppInterfacePreview: React.FC = () => {
             <div className="absolute top-0 w-full h-8 flex justify-center z-20 pt-2">
               <div className="w-24 h-5 bg-slate-800 rounded-b-xl" />
             </div>
-            
+
             {/* Map Area */}
             <div className="flex-1 bg-slate-800 relative overflow-hidden">
               <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
-              
+
               {/* Route line */}
               <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
                 <path d="M 50 150 Q 150 200 200 350 T 150 500" fill="none" stroke="#FE7743" strokeWidth="4" strokeDasharray="8 4" className="animate-[dash_20s_linear_infinite]" />
               </svg>
-              
+
               {/* Markers */}
-              <div className="absolute top-[130px] left-[30px] w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-lg"><div className="w-3 h-3 bg-white rounded-full"/></div>
-              <div className="absolute top-[480px] left-[130px] w-8 h-8 bg-primary-light rounded-full flex items-center justify-center shadow-lg"><div className="w-3 h-3 bg-white rounded-full"/></div>
-              
+              <div className="absolute top-[130px] left-[30px] w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-lg"><div className="w-3 h-3 bg-white rounded-full" /></div>
+              <div className="absolute top-[480px] left-[130px] w-8 h-8 bg-primary-light rounded-full flex items-center justify-center shadow-lg"><div className="w-3 h-3 bg-white rounded-full" /></div>
+
               {/* Moving Bike */}
               <div className="absolute top-[280px] left-[180px] text-white animate-bounce shadow-lg bg-slate-900 p-2 rounded-full border border-white/20">
                 <Bike size={20} className="text-primary-light" />
@@ -416,7 +416,7 @@ const AppInterfacePreview: React.FC = () => {
               </button>
             </div>
           </div>
-          
+
           {/* Decorative elements around mockup */}
           <div className="absolute top-20 -left-10 glass p-4 rounded-2xl border border-white/10 shadow-2xl animate-[float_4s_ease-in-out_infinite]">
             <div className="flex gap-3 items-center">
@@ -464,8 +464,8 @@ const AppInterfacePreview: React.FC = () => {
 const TestimonialSection: React.FC = () => {
   return (
     <section className="py-32 px-6 bg-slate-900 text-white relative overflow-hidden">
-       <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary-light/10 to-transparent skew-x-12 transform origin-top-right -z-10" />
-       <div className="max-w-7xl mx-auto">
+      <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary-light/10 to-transparent skew-x-12 transform origin-top-right -z-10" />
+      <div className="max-w-7xl mx-auto">
         <div className="text-center max-w-3xl mx-auto mb-20 space-y-6">
           <h2 className="text-primary-light font-black tracking-widest uppercase text-sm">Community Feedback</h2>
           <h3 className="text-4xl md:text-5xl font-black leading-tight">Don't just take our word for it</h3>
@@ -511,7 +511,7 @@ const FAQSection: React.FC = () => {
       <div className="space-y-4">
         {faqData.map((faq, i) => (
           <div key={i} className="glass border border-slate-200 dark:border-white/10 rounded-2xl overflow-hidden bg-white dark:bg-white/5 transition-all duration-300">
-            <button 
+            <button
               onClick={() => setOpenId(openId === i ? null : i)}
               className="w-full px-6 py-5 flex justify-between items-center text-left focus:outline-none"
             >

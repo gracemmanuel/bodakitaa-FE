@@ -10,7 +10,7 @@ import {
 import Navbar from '../components/Navbar';
 
 // --- Types ---
-type Role = 'client' | 'rider' | 'owner' | 'admin';
+type Role = 'client' | 'rider' | 'owner';
 
 interface FormState {
   role: Role;
@@ -274,7 +274,7 @@ const RegisterPage: React.FC = () => {
                   <p className="text-slate-500 dark:text-slate-400">Select the account type that best fits your needs.</p>
                 </div>
                 
-                <div className="grid sm:grid-cols-2 gap-6">
+                <div className="grid sm:grid-cols-1 md:grid-cols-3 gap-6">
                   <RoleCard 
                     role="client" 
                     currentRole={formData.role} 
@@ -298,14 +298,6 @@ const RegisterPage: React.FC = () => {
                     icon={Briefcase} 
                     label="Fleet Owner" 
                     desc="I want to manage my motorcycles." 
-                  />
-                  <RoleCard 
-                    role="admin" 
-                    currentRole={formData.role} 
-                    setRole={(r) => updateForm('role', r)} 
-                    icon={ShieldCheck} 
-                    label="Administrator" 
-                    desc="System management (Demo only)." 
                   />
                 </div>
               </div>
@@ -365,16 +357,7 @@ const RegisterPage: React.FC = () => {
                      </div>
                   </div>
                 )}
-                
-                {formData.role === 'admin' && (
-                  <div className="p-6 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-start gap-4">
-                     <AlertCircle size={24} className="text-amber-500 mt-1 flex-shrink-0" />
-                     <div>
-                        <h4 className="font-bold text-amber-600 dark:text-amber-400">Demo Admin Access</h4>
-                        <p className="text-sm text-amber-700/70 dark:text-amber-500/70 mt-1">Admin accounts are typically created internally. Proceeding will create a temporary local mock admin account for demonstration purposes.</p>
-                     </div>
-                  </div>
-                )}
+
               </div>
             )}
 
