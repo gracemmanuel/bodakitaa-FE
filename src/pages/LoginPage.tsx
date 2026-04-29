@@ -90,7 +90,7 @@ const LoginPage: React.FC = () => {
         <div className="w-full max-w-5xl flex rounded-[3rem] overflow-hidden shadow-2xl shadow-primary-light/10 border border-white/20 dark:border-white/5 bg-white/40 dark:bg-black/40 backdrop-blur-2xl">
           
           {/* Left Side: Form */}
-          <div className="w-full lg:w-1/2 p-10 md:p-16 flex flex-col justify-center bg-white dark:bg-slate-900/90 relative">
+          <div className="w-full lg:w-1/2 p-6 sm:p-10 md:p-16 flex flex-col justify-center bg-white dark:bg-slate-900/90 relative">
             <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-primary-light/10 to-transparent rounded-bl-full pointer-events-none" />
             
             <div className="mb-10 text-center lg:text-left">

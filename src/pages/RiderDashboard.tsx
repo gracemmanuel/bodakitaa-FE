@@ -296,7 +296,7 @@ const RiderDashboard: React.FC = () => {
           </div>
           
           <div className="xl:col-span-2">
-             <div className="h-[500px]">
+             <div className="h-[300px] md:h-[500px]">
                <EarningsChart />
              </div>
           </div>

@@ -105,7 +105,7 @@ const HeroSection: React.FC = () => {
   }, []);
 
   return (
-    <section ref={containerRef} className="relative pt-40 pb-32 px-6 overflow-hidden">
+    <section ref={containerRef} className="relative pt-32 md:pt-40 pb-20 md:pb-32 px-4 sm:px-6 overflow-hidden">
       {/* Decorative Background Patterns */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
         <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-primary-light/10 rounded-full blur-[100px] mix-blend-screen" />
@@ -126,7 +126,7 @@ const HeroSection: React.FC = () => {
             The Future of Urban Mobility
           </div>
 
-          <h1 className="hero-title text-6xl sm:text-7xl lg:text-8xl font-black leading-[1.1] tracking-tight text-transparent bg-clip-text bg-gradient-to-br from-white to-white/60 dark:from-white dark:to-slate-400">
+          <h1 className="hero-title text-4xl xs:text-5xl sm:text-7xl lg:text-8xl font-black leading-[1.1] tracking-tight text-transparent bg-clip-text bg-gradient-to-br from-slate-900 to-slate-700 dark:from-white dark:to-slate-400">
             <span className="block">Smart</span>
             <span className="block text-primary-light">Transport</span>
             <span className="block">Ecosystem</span>

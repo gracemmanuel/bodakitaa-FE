@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+import React from 'react';
 import { 
   MapPin, TrendingUp, Clock, Star, Navigation, Calendar, 
   CreditCard, Search, Filter, MoreHorizontal, Shield, 
-  AlertCircle, CheckCircle2, ChevronRight, Activity, Map as MapIcon,
+  AlertCircle, CheckCircle2, Activity, Map as MapIcon,
   PhoneCall, Smartphone
 } from 'lucide-react';
 import DashboardLayout from '../layouts/DashboardLayout';
@@ -155,10 +154,8 @@ const ActiveRideCard: React.FC = () => (
 );
 
 const RideHistoryTable: React.FC = () => {
-  const [filter, setFilter] = useState('All');
-  
   return (
-    <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl overflow-hidden flex flex-col h-[600px]">
+    <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl overflow-hidden flex flex-col h-[500px] md:h-[600px]">
       <div className="p-6 border-b border-slate-200 dark:border-white/10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-50 dark:bg-transparent">
         <div>
           <h3 className="text-xl font-black text-slate-900 dark:text-white">Ride History</h3>
@@ -310,7 +307,6 @@ const WalletSection: React.FC = () => (
 
 // --- Main Page Component ---
 const ClientDashboard: React.FC = () => {
-  const { t } = useTranslation();
 
   return (
     <DashboardLayout role="client">
@@ -347,7 +343,7 @@ const ClientDashboard: React.FC = () => {
             <RideHistoryTable />
           </div>
           
-          <div className="xl:col-span-1 h-[600px]">
+          <div className="xl:col-span-1 h-auto xl:h-[600px]">
             <WalletSection />
           </div>
         </div>

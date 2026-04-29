@@ -4,8 +4,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import gsap from 'gsap';
 import { 
   User, Mail, Lock, Bike, ShieldCheck, Briefcase, 
-  UserCheck, ArrowRight, CheckCircle2, AlertCircle,
-  Phone, MapPin, Camera, Upload, Building2, CreditCard
+  UserCheck, ArrowRight, CheckCircle2,
+  Phone, MapPin, Upload, Building2, CreditCard
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 
@@ -262,7 +262,7 @@ const RegisterPage: React.FC = () => {
         {/* Form Container */}
         <div 
           ref={formRef}
-          className="w-full max-w-3xl glass bg-white/60 dark:bg-black/60 rounded-[3rem] shadow-2xl border border-white/40 dark:border-white/10 p-8 md:p-12 overflow-hidden relative"
+          className="w-full max-w-3xl glass bg-white/60 dark:bg-black/60 rounded-[3rem] shadow-2xl border border-white/40 dark:border-white/10 p-6 sm:p-8 md:p-12 overflow-hidden relative"
         >
           <form onSubmit={handleSubmit}>
             
