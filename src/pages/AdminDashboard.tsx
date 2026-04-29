@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import React from 'react';
 import { 
-  Shield, Users, Map, AlertTriangle, Download, Filter, 
+  Shield, Users, Map, AlertTriangle, Download, 
   Activity, CheckCircle, XCircle, Search, MoreVertical,
   TrendingUp, TrendingDown, Server, Database, Globe, Clock
 } from 'lucide-react';
@@ -194,9 +193,7 @@ const SystemStatus: React.FC = () => (
   </div>
 );
 
-// --- Main Page Component ---
 const AdminDashboard: React.FC = () => {
-  const { t } = useTranslation();
 
   return (
     <DashboardLayout role="admin">
@@ -233,7 +230,7 @@ const AdminDashboard: React.FC = () => {
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
           {/* Heatmap Placeholder */}
-          <div className="xl:col-span-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl overflow-hidden shadow-xl flex flex-col h-[600px] relative">
+          <div className="xl:col-span-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl overflow-hidden shadow-xl flex flex-col h-[400px] md:h-[600px] relative">
              <div className="absolute top-6 left-6 z-10 glass px-4 py-2 rounded-xl border border-white/20 shadow-lg">
                 <h3 className="font-black text-slate-900 dark:text-white">Live Demand Heatmap</h3>
                 <p className="text-xs text-slate-500 dark:text-slate-300">Dar es Salaam Region</p>
@@ -257,8 +254,8 @@ const AdminDashboard: React.FC = () => {
              </div>
           </div>
           
-          <div className="xl:col-span-1 space-y-8 flex flex-col h-[600px]">
-            <div className="flex-1 min-h-0">
+          <div className="xl:col-span-1 space-y-8 flex flex-col h-auto xl:h-[600px]">
+            <div className="flex-1 min-h-[400px] xl:min-h-0">
               <VerificationQueue />
             </div>
             <div className="h-[250px]">

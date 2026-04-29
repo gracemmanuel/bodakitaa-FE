@@ -3,14 +3,15 @@ import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, Bike, Users, Wallet, FileBarChart, 
-  Settings, LogOut, MapPin, ClipboardList
+  Settings, LogOut, MapPin, ClipboardList, X
 } from 'lucide-react';
 
 interface SidebarProps {
   role: 'client' | 'rider' | 'owner' | 'admin';
+  closeSidebar?: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ role }) => {
+const Sidebar: React.FC<SidebarProps> = ({ role, closeSidebar }) => {
   const { t } = useTranslation();
   const location = useLocation();
 
@@ -42,11 +43,20 @@ const Sidebar: React.FC<SidebarProps> = ({ role }) => {
   const currentMenu = menuItems[role] || [];
 
   return (
-    <aside className="w-64 h-full glass border-r border-slate-200 dark:border-white/10 p-6 flex flex-col bg-slate-50/50 dark:bg-black/50 overflow-y-auto">
-      <Link to="/" className="flex items-center gap-2 mb-10">
-        <Bike className="text-primary-light w-8 h-8" />
-        <span className="text-xl font-black tracking-tighter text-primary-light dark:text-white">BodaKitaa</span>
-      </Link>
+    <aside className="w-64 h-full glass border-r border-slate-200 dark:border-white/10 p-6 flex flex-col bg-slate-50/50 dark:bg-black/50 overflow-y-auto relative">
+      <div className="flex items-center justify-between mb-10">
+        <Link to="/" className="flex items-center gap-2" onClick={closeSidebar}>
+          <Bike className="text-primary-light w-8 h-8" />
+          <span className="text-xl font-black tracking-tighter text-primary-light dark:text-white">BodaKitaa</span>
+        </Link>
+        
+        <button 
+          onClick={closeSidebar}
+          className="p-2 lg:hidden text-slate-500 hover:text-primary-light transition-colors"
+        >
+          <X size={20} />
+        </button>
+      </div>
 
       <nav className="flex-1 flex flex-col gap-2">
         {currentMenu.map((item) => {
@@ -55,6 +65,7 @@ const Sidebar: React.FC<SidebarProps> = ({ role }) => {
             <Link
               key={item.path}
               to={item.path}
+              onClick={closeSidebar}
               className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 ${
                 isActive 
                   ? 'bg-primary-light text-white shadow-lg shadow-primary-light/30' 
