@@ -1,4 +1,20 @@
 services:
+  fe-dev:
+    image: bodakitaa-fe-dev
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "5173:5173"
+    environment:
+      - HOST=0.0.0.0
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    volumes:
+      - .:/app
+      - /app/node_modules
+    restart: unless-stopped
+
   fe-prod:
     image: bodakitaa-fe-prod
     build:
@@ -6,4 +22,20 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8081:80"
+    restart: unless-stopped
+
+  be:
+    image: bodaboda-be
+    build:
+      context: ../bodaboda_be
+      dockerfile: Dockerfile
+    ports:
+      - "8005:8000"
+    volumes:
+      - ../bodaboda_be:/app
+      - /app/__pycache__
+    environment:
+      - DEBUG=1
+      - DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
+    command: python manage.py runserver 0.0.0.0:8000
     restart: unless-stopped
