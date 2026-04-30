@@ -2,12 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import gsap from 'gsap';
+import { useMutation } from '@apollo/client';
 import {
   User, Mail, Lock, Bike, ShieldCheck, Briefcase,
   UserCheck, ArrowRight, CheckCircle2,
-  Phone, MapPin, Upload, Building2, CreditCard
+  Phone, MapPin, Upload, Building2, CreditCard, AlertCircle
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
+import { REGISTER_MUTATION } from '../api/mutations';
 
 // --- Types ---
 type Role = 'client' | 'rider' | 'owner';
@@ -25,6 +27,11 @@ interface FormState {
   // Owner specific
   companyName: string;
   taxId: string;
+  // Files
+  idCardFront: File | null;
+  idCardBack: File | null;
+  licenseFile: File | null;
+  businessDocs: File | null;
 }
 
 // --- Sub-Components ---
@@ -126,16 +133,52 @@ const FormInput: React.FC<{
   );
 };
 
-const FileUploadField: React.FC<{ label: string; desc: string }> = ({ label, desc }) => (
-  <div className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl p-6 text-center hover:border-primary-light hover:bg-primary-light/5 transition-all cursor-pointer group">
-    <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-primary-light group-hover:text-white transition-colors text-slate-400">
-      <Upload size={20} />
+const FileUploadField: React.FC<{ 
+  label: string; 
+  desc: string; 
+  file: File | null; 
+  onChange: (file: File | null) => void 
+}> = ({ label, desc, file, onChange }) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  return (
+    <div 
+      onClick={() => fileInputRef.current?.click()}
+      className={`border-2 border-dashed rounded-2xl p-6 text-center transition-all cursor-pointer group relative overflow-hidden ${
+        file 
+          ? 'border-green-500 bg-green-500/5' 
+          : 'border-slate-300 dark:border-slate-700 hover:border-primary-light hover:bg-primary-light/5'
+      }`}
+    >
+      <input 
+        type="file" 
+        ref={fileInputRef}
+        onChange={(e) => onChange(e.target.files?.[0] || null)}
+        className="hidden"
+        accept="image/*,.pdf"
+      />
+      <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 transition-colors ${
+        file 
+          ? 'bg-green-500 text-white' 
+          : 'bg-slate-100 dark:bg-slate-800 text-slate-400 group-hover:bg-primary-light group-hover:text-white'
+      }`}>
+        {file ? <CheckCircle2 size={20} /> : <Upload size={20} />}
+      </div>
+      <h4 className="font-bold text-slate-900 dark:text-white text-sm mb-1">
+        {file ? file.name : label}
+      </h4>
+      <p className="text-xs text-slate-500 font-medium">{desc}</p>
+      {file && (
+        <button 
+          onClick={(e) => { e.stopPropagation(); onChange(null); }}
+          className="absolute top-2 right-2 p-1 rounded-full bg-red-100 text-red-500 hover:bg-red-200 transition-colors"
+        >
+          <AlertCircle size={14} />
+        </button>
+      )}
     </div>
-    <h4 className="font-bold text-slate-900 dark:text-white text-sm mb-1">{label}</h4>
-    <p className="text-xs text-slate-500 font-medium">{desc}</p>
-    <p className="text-[10px] text-slate-400 mt-4 uppercase font-bold tracking-wider">JPEG, PNG, PDF up to 5MB</p>
-  </div>
-);
+  );
+};
 
 // --- Main Page Component ---
 const RegisterPage: React.FC = () => {
@@ -144,7 +187,7 @@ const RegisterPage: React.FC = () => {
   const formRef = useRef<HTMLDivElement>(null);
 
   const [step, setStep] = useState(1);
-  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<FormState>({
     role: 'client',
@@ -156,7 +199,53 @@ const RegisterPage: React.FC = () => {
     licenseNumber: '',
     plateNumber: '',
     companyName: '',
-    taxId: ''
+    taxId: '',
+    idCardFront: null,
+    idCardBack: null,
+    licenseFile: null,
+    businessDocs: null
+  });
+
+  const uploadKYC = async (token: string) => {
+    const formDataUpload = new FormData();
+    if (formData.idCardFront) formDataUpload.append('id_card_front', formData.idCardFront);
+    if (formData.idCardBack) formDataUpload.append('id_card_back', formData.idCardBack);
+    if (formData.licenseFile) formDataUpload.append('license_file', formData.licenseFile);
+    if (formData.businessDocs) formDataUpload.append('business_docs', formData.businessDocs);
+
+    try {
+      const response = await fetch('http://localhost:8001/api/auth/kyc-upload/', {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `JWT ${token}`
+        },
+        body: formDataUpload
+      });
+      return response.ok;
+    } catch (err) {
+      console.error("KYC Upload failed", err);
+      return false;
+    }
+  };
+
+  const [register, { loading: isLoading }] = useMutation(REGISTER_MUTATION, {
+    onCompleted: async (data) => {
+      if (data.register.success) {
+        // If there are files to upload, do it now
+        if (formData.idCardFront || formData.idCardBack || formData.licenseFile || formData.businessDocs) {
+          const success = await uploadKYC(data.register.token);
+          if (!success) {
+            setError("Account created, but document upload failed. You can update them in your profile.");
+          }
+        }
+        navigate('/login', { state: { message: "Registration successful! Please login." } });
+      } else {
+        setError(data.register.message);
+      }
+    },
+    onError: (error) => {
+      setError(error.message || "An error occurred during registration.");
+    }
   });
 
   const updateForm = (key: keyof FormState, value: string) => {
@@ -189,13 +278,27 @@ const RegisterPage: React.FC = () => {
       return;
     }
 
-    setIsLoading(true);
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
-      navigate(`/dashboard/${formData.role}`);
-    }, 2000);
+    setError(null);
+    register({
+      variables: {
+        input: {
+          fullName: formData.fullName,
+          email: formData.email,
+          phone: formData.phone,
+          password: formData.password,
+          role: formData.role,
+          licenseNumber: formData.licenseNumber,
+          plateNumber: formData.plateNumber,
+          companyName: formData.companyName,
+          taxId: formData.taxId
+        }
+      }
+    });
   };
 
   const isLastStep =
@@ -262,6 +365,12 @@ const RegisterPage: React.FC = () => {
           className="w-full max-w-3xl glass bg-white/60 dark:bg-black/60 rounded-[3rem] shadow-2xl border border-white/40 dark:border-white/10 p-6 sm:p-8 md:p-12 overflow-hidden relative"
         >
           <form onSubmit={handleSubmit}>
+            {error && (
+              <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 flex items-start gap-3 animate-in slide-in-from-top-2">
+                <AlertCircle size={20} className="text-red-500 mt-0.5 flex-shrink-0" />
+                <p className="text-sm font-medium text-red-600 dark:text-red-400">{error}</p>
+              </div>
+            )}
 
             {/* Step 1: Role Selection */}
             {step === 1 && (
@@ -336,8 +445,24 @@ const RegisterPage: React.FC = () => {
                       <FormInput icon={MapPin} type="text" placeholder="MC 123 ABC" label="Vehicle Plate Number (Optional)" value={formData.plateNumber} onChange={(v) => updateForm('plateNumber', v)} />
                     </div>
                     <div className="grid md:grid-cols-2 gap-6">
-                      <FileUploadField label="Upload ID Card" desc="Front and back of National ID" />
-                      <FileUploadField label="Upload License" desc="Clear scan of Driving License" />
+                      <FileUploadField 
+                        label="Upload ID Card (Front)" 
+                        desc="Clear scan of your ID front" 
+                        file={formData.idCardFront}
+                        onChange={(f) => setFormData(prev => ({ ...prev, idCardFront: f }))}
+                      />
+                      <FileUploadField 
+                        label="Upload ID Card (Back)" 
+                        desc="Clear scan of your ID back" 
+                        file={formData.idCardBack}
+                        onChange={(f) => setFormData(prev => ({ ...prev, idCardBack: f }))}
+                      />
+                      <FileUploadField 
+                        label="Upload License" 
+                        desc="Clear scan of Driving License" 
+                        file={formData.licenseFile}
+                        onChange={(f) => setFormData(prev => ({ ...prev, licenseFile: f }))}
+                      />
                     </div>
                   </div>
                 )}
@@ -349,8 +474,18 @@ const RegisterPage: React.FC = () => {
                       <FormInput icon={CreditCard} type="text" placeholder="TIN Number" label="Tax ID (TIN)" value={formData.taxId} onChange={(v) => updateForm('taxId', v)} required />
                     </div>
                     <div className="grid md:grid-cols-2 gap-6">
-                      <FileUploadField label="National ID" desc="Front and back of Owner ID" />
-                      <FileUploadField label="Business Docs" desc="Registration / TIN Certificate" />
+                      <FileUploadField 
+                        label="National ID (Front)" 
+                        desc="Clear scan of your ID front" 
+                        file={formData.idCardFront}
+                        onChange={(f) => setFormData(prev => ({ ...prev, idCardFront: f }))}
+                      />
+                      <FileUploadField 
+                        label="Business Docs" 
+                        desc="Registration / TIN Certificate" 
+                        file={formData.businessDocs}
+                        onChange={(f) => setFormData(prev => ({ ...prev, businessDocs: f }))}
+                      />
                     </div>
                   </div>
                 )}

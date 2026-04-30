@@ -3,6 +3,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ClientDashboard from './pages/ClientDashboard';
 import RiderDashboard from './pages/RiderDashboard';
 import OwnerDashboard from './pages/OwnerDashboard';
@@ -19,6 +20,7 @@ function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             
             {/* Dashboards */}
             <Route path="/dashboard/client" element={<ClientDashboard />} />

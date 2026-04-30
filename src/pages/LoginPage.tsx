@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
+import { useMutation } from '@apollo/client';
 import {
   Mail, Lock, ArrowRight, Bike, ShieldCheck,
   Smartphone, Eye, EyeOff, AlertCircle, CheckCircle2
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import gsap from 'gsap';
+import { LOGIN_MUTATION } from '../api/mutations';
 
 // --- Sub-Components ---
 const AuthBackground: React.FC = () => {
@@ -35,7 +37,6 @@ const AuthBackground: React.FC = () => {
     <div className="absolute inset-0 overflow-hidden pointer-events-none z-0 bg-slate-50 dark:bg-slate-950">
       <div className="bg-blob-1 absolute top-[20%] left-[10%] w-[500px] h-[500px] bg-primary-light/10 dark:bg-primary-light/5 rounded-full blur-[120px] mix-blend-multiply dark:mix-blend-screen" />
       <div className="bg-blob-2 absolute bottom-[10%] right-[10%] w-[600px] h-[600px] bg-amber-500/10 dark:bg-amber-500/5 rounded-full blur-[150px] mix-blend-multiply dark:mix-blend-screen" />
-
       {/* Grid Overlay */}
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAwIDUgTCAyMCA1IE0gNSAwIEwgNSAyMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDE1NiwgMTYzLCAxNzUsIDAuMDUpIiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-50 dark:opacity-20" />
     </div>
@@ -50,12 +51,23 @@ const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Validation states
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
+
+  const [login, { loading: isLoading }] = useMutation(LOGIN_MUTATION, {
+    onCompleted: (data) => {
+      const { token, payload } = data.tokenAuth;
+      localStorage.setItem('token', token);
+      const role = payload?.role || 'client';
+      navigate(`/dashboard/${role}`);
+    },
+    onError: (err) => {
+      setError(err.message || 'Invalid email or password. Please try again.');
+    },
+  });
 
   const isEmailValid = email.length > 0 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const isPasswordValid = password.length >= 6;
@@ -63,22 +75,11 @@ const LoginPage: React.FC = () => {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (!isEmailValid || !isPasswordValid) {
-      setError("Please check your credentials and try again.");
+      setError('Please check your credentials and try again.');
       return;
     }
-
-    setIsLoading(true);
     setError(null);
-
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
-      // Demo routing based on email prefix (in reality, backend determines role)
-      if (email.startsWith('admin')) navigate('/dashboard/admin');
-      else if (email.startsWith('owner')) navigate('/dashboard/owner');
-      else if (email.startsWith('rider')) navigate('/dashboard/rider');
-      else navigate('/dashboard/client');
-    }, 1500);
+    login({ variables: { username: email, password } });
   };
 
   return (
@@ -164,7 +165,7 @@ const LoginPage: React.FC = () => {
                     <Lock className={`transition-colors ${passwordFocused ? 'text-primary-light' : 'text-slate-400'}`} size={20} />
                   </div>
                   <input
-                    type={showPassword ? "text" : "password"}
+                    type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     onFocus={() => setPasswordFocused(true)}
@@ -177,7 +178,7 @@ const LoginPage: React.FC = () => {
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors focus:outline-none"
-                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
@@ -195,9 +196,9 @@ const LoginPage: React.FC = () => {
                   <span className="text-sm font-medium text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">Remember me</span>
                 </label>
 
-                <button type="button" className="text-sm font-bold text-primary-light hover:underline underline-offset-4 decoration-2">
+                <Link to="/forgot-password" className="text-sm font-bold text-primary-light hover:underline underline-offset-4 decoration-2">
                   Forgot password?
-                </button>
+                </Link>
               </div>
 
               <button
@@ -211,7 +212,7 @@ const LoginPage: React.FC = () => {
               >
                 {isLoading ? (
                   <>
-                    <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin" />
+                    <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     <span>Signing in...</span>
                   </>
                 ) : (
@@ -225,18 +226,18 @@ const LoginPage: React.FC = () => {
             </form>
 
             <div className="mt-10 flex items-center justify-center gap-4 before:h-px before:flex-1 before:bg-slate-200 dark:before:bg-slate-800 after:h-px after:flex-1 after:bg-slate-200 dark:after:bg-slate-800">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Demo Access</span>
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Or sign in with</span>
             </div>
 
             <div className="mt-6 grid grid-cols-2 gap-3 text-xs font-medium text-slate-500">
-              <div className="bg-slate-50 dark:bg-white/5 p-3 rounded-xl border border-slate-100 dark:border-white/5 text-center cursor-pointer hover:border-primary-light transition-colors" onClick={() => { setEmail('admin@demo.com'); setPassword('password'); }}>Admin</div>
-              <div className="bg-slate-50 dark:bg-white/5 p-3 rounded-xl border border-slate-100 dark:border-white/5 text-center cursor-pointer hover:border-primary-light transition-colors" onClick={() => { setEmail('owner@demo.com'); setPassword('password'); }}>Owner</div>
-              <div className="bg-slate-50 dark:bg-white/5 p-3 rounded-xl border border-slate-100 dark:border-white/5 text-center cursor-pointer hover:border-primary-light transition-colors" onClick={() => { setEmail('rider@demo.com'); setPassword('password'); }}>Rider</div>
-              <div className="bg-slate-50 dark:bg-white/5 p-3 rounded-xl border border-slate-100 dark:border-white/5 text-center cursor-pointer hover:border-primary-light transition-colors" onClick={() => { setEmail('client@demo.com'); setPassword('password'); }}>Client</div>
+              <div className="bg-slate-50 dark:bg-white/5 p-3 rounded-xl border border-slate-100 dark:border-white/5 text-center cursor-pointer hover:border-primary-light transition-colors" onClick={() => { setEmail('admin@demo.com'); setPassword('password123'); }}>Admin</div>
+              <div className="bg-slate-50 dark:bg-white/5 p-3 rounded-xl border border-slate-100 dark:border-white/5 text-center cursor-pointer hover:border-primary-light transition-colors" onClick={() => { setEmail('owner@demo.com'); setPassword('password123'); }}>Owner</div>
+              <div className="bg-slate-50 dark:bg-white/5 p-3 rounded-xl border border-slate-100 dark:border-white/5 text-center cursor-pointer hover:border-primary-light transition-colors" onClick={() => { setEmail('rider@demo.com'); setPassword('password123'); }}>Rider</div>
+              <div className="bg-slate-50 dark:bg-white/5 p-3 rounded-xl border border-slate-100 dark:border-white/5 text-center cursor-pointer hover:border-primary-light transition-colors" onClick={() => { setEmail('client@demo.com'); setPassword('password123'); }}>Client</div>
             </div>
           </div>
 
-          {/* Right Side: Graphic/Feature Display (Hidden on mobile) */}
+          {/* Right Side: Graphic */}
           <div className="hidden lg:flex w-1/2 bg-slate-900 relative p-12 flex-col justify-between overflow-hidden">
             <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1558981420-c532902e58b4?q=80&w=1964&auto=format&fit=crop')] bg-cover bg-center opacity-30 mix-blend-luminosity" />
             <div className="absolute inset-0 bg-gradient-to-br from-slate-900/90 via-slate-900/70 to-primary-dark/80 mix-blend-multiply" />
@@ -262,7 +263,6 @@ const LoginPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Abstract geometric decorations */}
             <div className="absolute top-[10%] right-[10%] w-32 h-32 border border-white/10 rounded-full animate-[spin_10s_linear_infinite]" />
             <div className="absolute top-[15%] right-[15%] w-16 h-16 border border-primary-light/30 rounded-full animate-[spin_5s_linear_infinite_reverse]" />
           </div>
