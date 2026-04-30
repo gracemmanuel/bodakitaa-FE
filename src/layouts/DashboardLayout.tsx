@@ -21,11 +21,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role }) => 
   return (
     <div className="flex h-screen bg-slate-100 dark:bg-black transition-colors duration-300 font-sans selection:bg-primary-light/30 selection:text-primary-light overflow-hidden">
       <div className={`fixed inset-0 bg-black/50 z-40 lg:hidden transition-opacity duration-300 ${isSidebarOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`} onClick={() => setIsSidebarOpen(false)} />
-      
+
       <div className={`fixed inset-y-0 left-0 z-50 lg:relative lg:z-0 transform transition-transform duration-300 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
         <Sidebar role={role} closeSidebar={() => setIsSidebarOpen(false)} />
       </div>
-      
+
       <div className="flex-1 flex flex-col h-full overflow-hidden relative">
         {/* Abstract subtle background for dashboards */}
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAwIDIwIEwgNDAgMjAgTSAyMCAwIEwgMjAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgxNTYsIDE2MywgMTc1LCAwLjAzKSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-30 pointer-events-none" />
@@ -33,27 +33,27 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role }) => 
         {/* Dashboard Header */}
         <header className="h-20 border-b border-slate-200 dark:border-white/10 flex items-center justify-between px-4 md:px-8 bg-white/80 dark:bg-black/80 backdrop-blur-md z-10">
           <div className="flex items-center gap-4">
-             <button 
-               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-               className="p-2 lg:hidden text-slate-700 dark:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
-             >
-               <Menu size={24} />
-             </button>
-             <div className="w-10 h-10 rounded-xl bg-primary-light/10 text-primary-light flex items-center justify-center font-bold uppercase sm:hidden">
-                {role.charAt(0)}
-             </div>
-             <div>
-               <h2 className="text-lg md:text-xl font-black text-slate-900 dark:text-white capitalize hidden sm:block">{role} Portal</h2>
-               <p className="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-widest hidden sm:block">BodaKitaa System</p>
-             </div>
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="p-2 lg:hidden text-slate-700 dark:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+            >
+              <Menu size={24} />
+            </button>
+            <div className="w-10 h-10 rounded-xl bg-primary-light/10 text-primary-light flex items-center justify-center font-bold uppercase sm:hidden">
+              {role.charAt(0)}
+            </div>
+            <div>
+              <h2 className="text-lg md:text-xl font-black text-slate-900 dark:text-white capitalize hidden sm:block">{role} Portal</h2>
+              <p className="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-widest hidden sm:block">BodaKitaa System</p>
+            </div>
           </div>
-          
+
           <div className="flex items-center gap-4 md:gap-6">
             <button onClick={toggleLang} className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-full transition-colors flex items-center gap-1 text-slate-700 dark:text-white">
               <Globe size={18} />
               <span className="text-xs font-bold uppercase hidden sm:block">{i18n.language}</span>
             </button>
-            
+
             <button onClick={toggleTheme} className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-full transition-colors text-slate-700 dark:text-white">
               {isDark ? <Sun size={18} /> : <Moon size={18} />}
             </button>

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { 
-  Bike, Users, TrendingUp, DollarSign, Plus, Settings2, 
-  Search, Filter, MoreHorizontal, AlertTriangle, CheckCircle, 
+import {
+  Bike, Users, TrendingUp, DollarSign, Plus, Settings2,
+  Search, Filter, MoreHorizontal, AlertTriangle, CheckCircle,
   Clock, Activity, MapPin, Wrench, FileText, Download, ChevronRight, ChevronDown, Star
 } from 'lucide-react';
 import DashboardLayout from '../layouts/DashboardLayout';
@@ -86,25 +86,25 @@ const RevenueChartPlaceholder: React.FC = () => (
         <span className="flex items-center gap-1 text-xs font-bold text-slate-500"><div className="w-3 h-3 rounded-full bg-slate-200 dark:bg-slate-700" /> Target</span>
       </div>
     </div>
-    
+
     {/* CSS Grid based Bar Chart Mockup */}
     <div className="flex-1 flex items-end gap-2 sm:gap-4 mt-auto pt-8">
       {[40, 70, 45, 90, 60, 100, 85].map((val, i) => (
         <div key={i} className="flex-1 flex flex-col justify-end items-center gap-2 relative group h-[200px]">
           {/* Target Line / Background bar */}
           <div className="w-full max-w-[40px] bg-slate-100 dark:bg-white/5 rounded-t-lg absolute bottom-0 h-[80%]" />
-          
+
           {/* Actual Bar */}
-          <div 
-            className="w-full max-w-[40px] bg-gradient-to-t from-primary-dark to-primary-light rounded-t-lg relative z-10 transition-all duration-500 group-hover:opacity-80" 
-            style={{ height: `${val}%` }} 
+          <div
+            className="w-full max-w-[40px] bg-gradient-to-t from-primary-dark to-primary-light rounded-t-lg relative z-10 transition-all duration-500 group-hover:opacity-80"
+            style={{ height: `${val}%` }}
           >
-             {/* Tooltip */}
-             <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-20">
-               TZS {val * 1000}
-             </div>
+            {/* Tooltip */}
+            <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-20">
+              TZS {val * 1000}
+            </div>
           </div>
-          
+
           <span className="text-xs font-bold text-slate-400 dark:text-slate-500 mt-2 block w-full text-center">
             {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i]}
           </span>
@@ -116,7 +116,7 @@ const RevenueChartPlaceholder: React.FC = () => (
 
 const BikeManagementTable: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'all' | 'active' | 'maintenance'>('all');
-  
+
   const filteredBikes = mockBikes.filter(b => {
     if (activeTab === 'active') return b.status === 'Active';
     if (activeTab === 'maintenance') return b.status === 'Maintenance' || b.maintenanceStatus === 'Due Soon' || b.maintenanceStatus === 'Overdue';
@@ -131,21 +131,21 @@ const BikeManagementTable: React.FC = () => {
             <h3 className="text-xl font-black text-slate-900 dark:text-white">Fleet Garage</h3>
             <p className="text-sm text-slate-500 dark:text-slate-400">Manage motorcycles, assignments, and maintenance.</p>
           </div>
-          
+
           <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-             <div className="relative flex-1 lg:flex-none">
-               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-               <input type="text" placeholder="Search by plate or model..." className="pl-9 pr-4 py-2 bg-white dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:border-primary-light w-full lg:w-64 transition-colors" />
-             </div>
-             <button className="px-4 py-2 rounded-xl border border-slate-200 dark:border-white/10 flex items-center gap-2 text-sm font-bold bg-white dark:bg-black/50 hover:bg-slate-50 dark:hover:bg-white/5 whitespace-nowrap">
-               <Filter size={16} /> Filter
-             </button>
-             <button className="px-4 py-2 rounded-xl bg-primary-light text-white flex items-center gap-2 text-sm font-bold hover:bg-primary-dark transition-colors whitespace-nowrap">
-               <Plus size={16} /> Add Bike
-             </button>
+            <div className="relative flex-1 lg:flex-none">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input type="text" placeholder="Search by plate or model..." className="pl-9 pr-4 py-2 bg-white dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:border-primary-light w-full lg:w-64 transition-colors" />
+            </div>
+            <button className="px-4 py-2 rounded-xl border border-slate-200 dark:border-white/10 flex items-center gap-2 text-sm font-bold bg-white dark:bg-black/50 hover:bg-slate-50 dark:hover:bg-white/5 whitespace-nowrap">
+              <Filter size={16} /> Filter
+            </button>
+            <button className="px-4 py-2 rounded-xl bg-primary-light text-white flex items-center gap-2 text-sm font-bold hover:bg-primary-dark transition-colors whitespace-nowrap">
+              <Plus size={16} /> Add Bike
+            </button>
           </div>
         </div>
-        
+
         {/* Tabs */}
         <div className="flex gap-6 border-b border-slate-200 dark:border-white/10">
           {[
@@ -153,7 +153,7 @@ const BikeManagementTable: React.FC = () => {
             { id: 'active', label: 'Active on Road', count: mockBikes.filter(b => b.status === 'Active').length },
             { id: 'maintenance', label: 'Needs Attention', count: mockBikes.filter(b => b.status === 'Maintenance' || b.maintenanceStatus === 'Overdue').length }
           ].map(tab => (
-            <button 
+            <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
               className={`pb-3 text-sm font-bold relative transition-colors ${activeTab === tab.id ? 'text-primary-light' : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'}`}
@@ -164,7 +164,7 @@ const BikeManagementTable: React.FC = () => {
           ))}
         </div>
       </div>
-      
+
       <div className="overflow-x-auto custom-scrollbar">
         <table className="w-full text-left border-collapse min-w-[1000px]">
           <thead className="bg-slate-50 dark:bg-white/5">
@@ -192,7 +192,7 @@ const BikeManagementTable: React.FC = () => {
                     </div>
                   </div>
                 </td>
-                
+
                 <td className="px-6 py-4">
                   {bike.assignedRider ? (
                     <div className="flex items-center gap-3">
@@ -210,39 +210,37 @@ const BikeManagementTable: React.FC = () => {
                     </button>
                   )}
                 </td>
-                
+
                 <td className="px-6 py-4">
                   <p className="text-sm font-black text-slate-900 dark:text-white">TZS {bike.todayEarnings.toLocaleString()}</p>
                   <div className="w-full max-w-[120px] h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full mt-2 overflow-hidden flex">
-                    <div 
-                      className={`h-full ${bike.todayEarnings >= bike.targetEarnings ? 'bg-green-500' : 'bg-primary-light'}`} 
-                      style={{ width: `${Math.min(100, (bike.todayEarnings / bike.targetEarnings) * 100)}%` }} 
+                    <div
+                      className={`h-full ${bike.todayEarnings >= bike.targetEarnings ? 'bg-green-500' : 'bg-primary-light'}`}
+                      style={{ width: `${Math.min(100, (bike.todayEarnings / bike.targetEarnings) * 100)}%` }}
                     />
                   </div>
                   <p className="text-[10px] font-bold text-slate-500 mt-1">Target: TZS {bike.targetEarnings.toLocaleString()}</p>
                 </td>
-                
+
                 <td className="px-6 py-4">
-                  <div className={`inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${
-                    bike.maintenanceStatus === 'Good' ? 'bg-green-500/10 text-green-600 dark:text-green-400' : 
-                    bike.maintenanceStatus === 'Overdue' ? 'bg-red-500/10 text-red-600 dark:text-red-400' : 
-                    'bg-amber-500/10 text-amber-600 dark:text-amber-400'
-                  }`}>
+                  <div className={`inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${bike.maintenanceStatus === 'Good' ? 'bg-green-500/10 text-green-600 dark:text-green-400' :
+                      bike.maintenanceStatus === 'Overdue' ? 'bg-red-500/10 text-red-600 dark:text-red-400' :
+                        'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                    }`}>
                     <Wrench size={12} /> {bike.maintenanceStatus}
                   </div>
                   <p className="text-[10px] text-slate-500 mt-1.5">Last: {bike.lastService}</p>
                 </td>
-                
+
                 <td className="px-6 py-4">
-                  <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                    bike.status === 'Active' ? 'bg-green-500/20 text-green-700 dark:text-green-400 border border-green-500/30' : 
-                    bike.status === 'Maintenance' ? 'bg-red-500/20 text-red-700 dark:text-red-400 border border-red-500/30' : 
-                    'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600'
-                  }`}>
+                  <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${bike.status === 'Active' ? 'bg-green-500/20 text-green-700 dark:text-green-400 border border-green-500/30' :
+                      bike.status === 'Maintenance' ? 'bg-red-500/20 text-red-700 dark:text-red-400 border border-red-500/30' :
+                        'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600'
+                    }`}>
                     {bike.status}
                   </span>
                 </td>
-                
+
                 <td className="px-6 py-4 text-right">
                   <button className="p-2 text-slate-400 hover:text-primary-light hover:bg-primary-light/10 rounded-lg transition-colors">
                     <MoreHorizontal size={20} />
@@ -253,12 +251,12 @@ const BikeManagementTable: React.FC = () => {
           </tbody>
         </table>
       </div>
-      
+
       {filteredBikes.length === 0 && (
-         <div className="p-12 text-center flex flex-col items-center">
-            <Bike size={48} className="text-slate-300 dark:text-slate-700 mb-4" />
-            <p className="text-lg font-bold text-slate-500">No bikes found in this category.</p>
-         </div>
+        <div className="p-12 text-center flex flex-col items-center">
+          <Bike size={48} className="text-slate-300 dark:text-slate-700 mb-4" />
+          <p className="text-lg font-bold text-slate-500">No bikes found in this category.</p>
+        </div>
       )}
     </div>
   );
@@ -282,12 +280,12 @@ const OwnerDashboard: React.FC = () => {
             </p>
           </div>
           <div className="flex gap-3">
-             <button className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 font-bold bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 transition-colors flex items-center gap-2">
-               <FileText size={18} /> Reports
-             </button>
-             <button className="premium-btn bg-primary-light text-white shadow-xl flex items-center gap-2 px-6">
-               <Plus size={18} /> Register Bike
-             </button>
+            <button className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 font-bold bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 transition-colors flex items-center gap-2">
+              <FileText size={18} /> Reports
+            </button>
+            <button className="premium-btn bg-primary-light text-white shadow-xl flex items-center gap-2 px-6">
+              <Plus size={18} /> Register Bike
+            </button>
           </div>
         </div>
 
@@ -304,34 +302,34 @@ const OwnerDashboard: React.FC = () => {
           <div className="xl:col-span-2">
             <BikeManagementTable />
           </div>
-          
+
           <div className="xl:col-span-1 space-y-8">
             <div className="h-[400px]">
-               <RevenueChartPlaceholder />
+              <RevenueChartPlaceholder />
             </div>
-            
+
             {/* Quick Actions / Alerts */}
             <div className="bg-red-500/10 border border-red-500/20 rounded-3xl p-6">
-               <div className="flex items-center gap-3 mb-4 text-red-600 dark:text-red-400">
-                  <AlertTriangle size={24} />
-                  <h3 className="text-lg font-black">Attention Required</h3>
-               </div>
-               <div className="space-y-4">
-                  <div className="bg-white dark:bg-black/50 p-4 rounded-2xl flex justify-between items-center shadow-sm">
-                     <div>
-                        <p className="font-bold text-sm text-slate-900 dark:text-white">MC 321 JKL</p>
-                        <p className="text-xs text-slate-500">Service Overdue by 5 days</p>
-                     </div>
-                     <button className="text-xs font-bold text-red-500 hover:underline">Schedule</button>
+              <div className="flex items-center gap-3 mb-4 text-red-600 dark:text-red-400">
+                <AlertTriangle size={24} />
+                <h3 className="text-lg font-black">Attention Required</h3>
+              </div>
+              <div className="space-y-4">
+                <div className="bg-white dark:bg-black/50 p-4 rounded-2xl flex justify-between items-center shadow-sm">
+                  <div>
+                    <p className="font-bold text-sm text-slate-900 dark:text-white">MC 321 JKL</p>
+                    <p className="text-xs text-slate-500">Service Overdue by 5 days</p>
                   </div>
-                  <div className="bg-white dark:bg-black/50 p-4 rounded-2xl flex justify-between items-center shadow-sm">
-                     <div>
-                        <p className="font-bold text-sm text-slate-900 dark:text-white">Rashid J.</p>
-                        <p className="text-xs text-slate-500">Rider inactive for 3 days</p>
-                     </div>
-                     <button className="text-xs font-bold text-slate-900 dark:text-white hover:underline">Contact</button>
+                  <button className="text-xs font-bold text-red-500 hover:underline">Schedule</button>
+                </div>
+                <div className="bg-white dark:bg-black/50 p-4 rounded-2xl flex justify-between items-center shadow-sm">
+                  <div>
+                    <p className="font-bold text-sm text-slate-900 dark:text-white">Rashid J.</p>
+                    <p className="text-xs text-slate-500">Rider inactive for 3 days</p>
                   </div>
-               </div>
+                  <button className="text-xs font-bold text-slate-900 dark:text-white hover:underline">Contact</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -1,6 +1,6 @@
 import React from 'react';
-import { 
-  Shield, Users, Map, AlertTriangle, Download, 
+import {
+  Shield, Users, Map, AlertTriangle, Download,
   Activity, CheckCircle, XCircle, Search, MoreVertical,
   TrendingUp, TrendingDown, Server, Database, Globe, Clock
 } from 'lucide-react';
@@ -54,7 +54,7 @@ const StatCard: React.FC<{ title: string; value: string | number; icon: React.El
     <div className="relative z-10">
       <h4 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight mb-1">{value}</h4>
       <p className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{title}</p>
-      
+
       {trend && (
         <div className="flex items-center gap-2 mt-4 pt-4 border-t border-slate-100 dark:border-white/5">
           <span className={`flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full ${trend.isUp ? 'bg-green-500/10 text-green-600 dark:text-green-400' : 'bg-red-500/10 text-red-600 dark:text-red-400'}`}>
@@ -77,7 +77,7 @@ const VerificationQueue: React.FC = () => (
       </div>
       <button className="text-sm font-bold text-primary-light hover:underline">View All (14)</button>
     </div>
-    
+
     <div className="flex-1 overflow-auto custom-scrollbar p-6 space-y-4">
       {mockVerifications.map((req) => (
         <div key={req.id} className="border border-slate-200 dark:border-white/10 rounded-2xl p-4 hover:border-primary-light/50 transition-colors bg-white dark:bg-black/20">
@@ -95,28 +95,27 @@ const VerificationQueue: React.FC = () => (
               </div>
             </div>
             <div className="flex flex-col items-end gap-2">
-               <span className={`text-[10px] font-black uppercase px-2 py-1 rounded-full ${
-                  req.riskScore === 'Low' ? 'bg-green-500/10 text-green-500' :
+              <span className={`text-[10px] font-black uppercase px-2 py-1 rounded-full ${req.riskScore === 'Low' ? 'bg-green-500/10 text-green-500' :
                   req.riskScore === 'Medium' ? 'bg-amber-500/10 text-amber-500' :
-                  'bg-red-500/10 text-red-500'
-               }`}>
-                 Risk: {req.riskScore}
-               </span>
-               <span className="text-[10px] font-mono text-slate-400">{req.id}</span>
+                    'bg-red-500/10 text-red-500'
+                }`}>
+                Risk: {req.riskScore}
+              </span>
+              <span className="text-[10px] font-mono text-slate-400">{req.id}</span>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-2 gap-2 mb-4">
             {req.documents.map((doc, idx) => (
-               <div key={idx} className="flex justify-between items-center bg-slate-50 dark:bg-white/5 px-3 py-2 rounded-lg border border-slate-100 dark:border-white/5">
-                 <span className="text-xs font-medium text-slate-600 dark:text-slate-400">{doc.type}</span>
-                 {doc.status === 'Verified' && <CheckCircle size={14} className="text-green-500" />}
-                 {doc.status === 'Pending' && <Clock size={14} className="text-amber-500" />}
-                 {doc.status === 'Rejected' && <XCircle size={14} className="text-red-500" />}
-               </div>
+              <div key={idx} className="flex justify-between items-center bg-slate-50 dark:bg-white/5 px-3 py-2 rounded-lg border border-slate-100 dark:border-white/5">
+                <span className="text-xs font-medium text-slate-600 dark:text-slate-400">{doc.type}</span>
+                {doc.status === 'Verified' && <CheckCircle size={14} className="text-green-500" />}
+                {doc.status === 'Pending' && <Clock size={14} className="text-amber-500" />}
+                {doc.status === 'Rejected' && <XCircle size={14} className="text-red-500" />}
+              </div>
             ))}
           </div>
-          
+
           <div className="flex gap-2 pt-4 border-t border-slate-100 dark:border-white/5">
             <button className="flex-1 py-2 bg-primary-light text-white rounded-xl text-sm font-bold shadow-md shadow-primary-light/20 hover:bg-primary-dark transition-colors">Review</button>
             <button className="w-10 flex items-center justify-center border border-slate-200 dark:border-white/20 rounded-xl hover:bg-slate-50 dark:hover:bg-white/10 transition-colors">
@@ -132,7 +131,7 @@ const VerificationQueue: React.FC = () => (
 const SystemStatus: React.FC = () => (
   <div className="bg-slate-900 text-white border border-slate-800 rounded-3xl overflow-hidden flex flex-col h-full shadow-2xl relative">
     <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 mix-blend-overlay pointer-events-none" />
-    
+
     <div className="p-6 border-b border-slate-800 flex justify-between items-center relative z-10">
       <div>
         <h3 className="text-xl font-black flex items-center gap-2">
@@ -140,50 +139,48 @@ const SystemStatus: React.FC = () => (
         </h3>
       </div>
       <div className="flex gap-2">
-         <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs font-bold rounded uppercase tracking-wider">All Systems Operational</span>
+        <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs font-bold rounded uppercase tracking-wider">All Systems Operational</span>
       </div>
     </div>
 
     <div className="grid grid-cols-3 divide-x divide-slate-800 border-b border-slate-800 relative z-10">
-       <div className="p-4 text-center">
-         <Server size={20} className="mx-auto text-slate-400 mb-2" />
-         <p className="text-2xl font-black">99.9%</p>
-         <p className="text-[10px] text-slate-500 uppercase font-bold mt-1">API Uptime</p>
-       </div>
-       <div className="p-4 text-center">
-         <Database size={20} className="mx-auto text-slate-400 mb-2" />
-         <p className="text-2xl font-black">34ms</p>
-         <p className="text-[10px] text-slate-500 uppercase font-bold mt-1">DB Latency</p>
-       </div>
-       <div className="p-4 text-center">
-         <Globe size={20} className="mx-auto text-slate-400 mb-2" />
-         <p className="text-2xl font-black">1.2k</p>
-         <p className="text-[10px] text-slate-500 uppercase font-bold mt-1">Active WS</p>
-       </div>
+      <div className="p-4 text-center">
+        <Server size={20} className="mx-auto text-slate-400 mb-2" />
+        <p className="text-2xl font-black">99.9%</p>
+        <p className="text-[10px] text-slate-500 uppercase font-bold mt-1">API Uptime</p>
+      </div>
+      <div className="p-4 text-center">
+        <Database size={20} className="mx-auto text-slate-400 mb-2" />
+        <p className="text-2xl font-black">34ms</p>
+        <p className="text-[10px] text-slate-500 uppercase font-bold mt-1">DB Latency</p>
+      </div>
+      <div className="p-4 text-center">
+        <Globe size={20} className="mx-auto text-slate-400 mb-2" />
+        <p className="text-2xl font-black">1.2k</p>
+        <p className="text-[10px] text-slate-500 uppercase font-bold mt-1">Active WS</p>
+      </div>
     </div>
-    
+
     <div className="p-6 flex-1 relative z-10">
       <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Recent Alerts</h4>
       <div className="space-y-3">
         {mockAlerts.map((alert) => (
-          <div key={alert.id} className={`p-3 rounded-xl border flex items-start gap-3 ${
-            alert.level === 'critical' ? 'bg-red-500/10 border-red-500/20' :
-            alert.level === 'warning' ? 'bg-amber-500/10 border-amber-500/20' :
-            'bg-blue-500/10 border-blue-500/20'
-          }`}>
-            <div className={`mt-1 ${
-              alert.level === 'critical' ? 'text-red-500' :
-              alert.level === 'warning' ? 'text-amber-500' :
-              'text-blue-500'
+          <div key={alert.id} className={`p-3 rounded-xl border flex items-start gap-3 ${alert.level === 'critical' ? 'bg-red-500/10 border-red-500/20' :
+              alert.level === 'warning' ? 'bg-amber-500/10 border-amber-500/20' :
+                'bg-blue-500/10 border-blue-500/20'
             }`}>
+            <div className={`mt-1 ${alert.level === 'critical' ? 'text-red-500' :
+                alert.level === 'warning' ? 'text-amber-500' :
+                  'text-blue-500'
+              }`}>
               {alert.level === 'critical' ? <AlertTriangle size={16} /> : alert.level === 'warning' ? <AlertTriangle size={16} /> : <Activity size={16} />}
             </div>
             <div>
               <p className="text-sm font-medium leading-snug text-slate-200">{alert.message}</p>
               <div className="flex gap-2 mt-1.5">
-                 <span className="text-[10px] font-mono text-slate-500">{alert.module}</span>
-                 <span className="text-[10px] text-slate-500">•</span>
-                 <span className="text-[10px] text-slate-500">{alert.timestamp}</span>
+                <span className="text-[10px] font-mono text-slate-500">{alert.module}</span>
+                <span className="text-[10px] text-slate-500">•</span>
+                <span className="text-[10px] text-slate-500">{alert.timestamp}</span>
               </div>
             </div>
           </div>
@@ -209,13 +206,13 @@ const AdminDashboard: React.FC = () => {
             </p>
           </div>
           <div className="flex gap-3">
-             <div className="relative">
-               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-               <input type="text" placeholder="Global search..." className="pl-9 pr-4 py-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:border-primary-light w-full lg:w-64 transition-colors font-medium shadow-sm" />
-             </div>
-             <button className="premium-btn bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xl flex items-center gap-2 px-6">
-               <Download size={18} /> Export Data
-             </button>
+            <div className="relative">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input type="text" placeholder="Global search..." className="pl-9 pr-4 py-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:border-primary-light w-full lg:w-64 transition-colors font-medium shadow-sm" />
+            </div>
+            <button className="premium-btn bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xl flex items-center gap-2 px-6">
+              <Download size={18} /> Export Data
+            </button>
           </div>
         </div>
 
@@ -231,29 +228,29 @@ const AdminDashboard: React.FC = () => {
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
           {/* Heatmap Placeholder */}
           <div className="xl:col-span-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl overflow-hidden shadow-xl flex flex-col h-[400px] md:h-[600px] relative">
-             <div className="absolute top-6 left-6 z-10 glass px-4 py-2 rounded-xl border border-white/20 shadow-lg">
-                <h3 className="font-black text-slate-900 dark:text-white">Live Demand Heatmap</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-300">Dar es Salaam Region</p>
-             </div>
-             <div className="absolute top-6 right-6 z-10 flex gap-2">
-                <button className="px-3 py-1.5 bg-white dark:bg-slate-800 rounded-lg text-xs font-bold shadow-md border border-slate-200 dark:border-white/10">Surge Pricing</button>
-                <button className="px-3 py-1.5 bg-primary-light text-white rounded-lg text-xs font-bold shadow-md">Demand</button>
-             </div>
-             
-             {/* Map Background Mock */}
-             <div className="flex-1 bg-slate-100 dark:bg-slate-900 relative overflow-hidden flex items-center justify-center">
-                <div className="absolute inset-0 opacity-30 dark:opacity-10" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
-                
-                {/* Heatmap Blobs */}
-                <div className="absolute top-1/4 left-1/3 w-64 h-64 bg-red-500/40 rounded-full blur-[60px] animate-pulse" />
-                <div className="absolute top-1/2 left-1/2 w-48 h-48 bg-amber-500/40 rounded-full blur-[50px] animate-pulse" style={{ animationDelay: '1s' }} />
-                <div className="absolute bottom-1/4 right-1/4 w-72 h-72 bg-primary-light/40 rounded-full blur-[70px] animate-pulse" style={{ animationDelay: '0.5s' }} />
-                
-                <Map size={100} className="text-slate-300 dark:text-slate-700 opacity-50" />
-                <p className="absolute text-slate-400 dark:text-slate-600 font-bold tracking-widest uppercase mt-32">Interactive Map Interface</p>
-             </div>
+            <div className="absolute top-6 left-6 z-10 glass px-4 py-2 rounded-xl border border-white/20 shadow-lg">
+              <h3 className="font-black text-slate-900 dark:text-white">Live Demand Heatmap</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-300">Dar es Salaam Region</p>
+            </div>
+            <div className="absolute top-6 right-6 z-10 flex gap-2">
+              <button className="px-3 py-1.5 bg-white dark:bg-slate-800 rounded-lg text-xs font-bold shadow-md border border-slate-200 dark:border-white/10">Surge Pricing</button>
+              <button className="px-3 py-1.5 bg-primary-light text-white rounded-lg text-xs font-bold shadow-md">Demand</button>
+            </div>
+
+            {/* Map Background Mock */}
+            <div className="flex-1 bg-slate-100 dark:bg-slate-900 relative overflow-hidden flex items-center justify-center">
+              <div className="absolute inset-0 opacity-30 dark:opacity-10" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
+
+              {/* Heatmap Blobs */}
+              <div className="absolute top-1/4 left-1/3 w-64 h-64 bg-red-500/40 rounded-full blur-[60px] animate-pulse" />
+              <div className="absolute top-1/2 left-1/2 w-48 h-48 bg-amber-500/40 rounded-full blur-[50px] animate-pulse" style={{ animationDelay: '1s' }} />
+              <div className="absolute bottom-1/4 right-1/4 w-72 h-72 bg-primary-light/40 rounded-full blur-[70px] animate-pulse" style={{ animationDelay: '0.5s' }} />
+
+              <Map size={100} className="text-slate-300 dark:text-slate-700 opacity-50" />
+              <p className="absolute text-slate-400 dark:text-slate-600 font-bold tracking-widest uppercase mt-32">Interactive Map Interface</p>
+            </div>
           </div>
-          
+
           <div className="xl:col-span-1 space-y-8 flex flex-col h-auto xl:h-[600px]">
             <div className="flex-1 min-h-[400px] xl:min-h-0">
               <VerificationQueue />
