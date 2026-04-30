@@ -163,6 +163,29 @@ const RegisterPage: React.FC = () => {
     setFormData(prev => ({ ...prev, [key]: value }));
   };
 
+  // Validation Logic
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email);
+  const isPasswordValid = formData.password.length >= 6;
+  const passwordsMatch = formData.password === formData.confirmPassword;
+  
+  const isStep2Valid = 
+    formData.fullName.length > 0 && 
+    formData.phone.length > 0 && 
+    isEmailValid && 
+    isPasswordValid && 
+    passwordsMatch &&
+    formData.confirmPassword !== '';
+
+  const isStep3Valid = 
+    formData.role === 'client' ? true :
+    formData.role === 'rider' ? formData.licenseNumber.length > 0 :
+    formData.role === 'owner' ? formData.taxId.length > 0 : false;
+
+  const isCurrentStepValid = 
+    step === 1 ? true :
+    step === 2 ? isStep2Valid :
+    step === 3 ? isStep3Valid : false;
+
   useEffect(() => {
     // Animate form step transition
     if (formRef.current) {
@@ -312,11 +335,26 @@ const RegisterPage: React.FC = () => {
                   <FormInput icon={User} type="text" placeholder="John Doe" label={t('auth.fullname')} value={formData.fullName} onChange={(v) => updateForm('fullName', v)} required />
                   <FormInput icon={Phone} type="tel" placeholder="+255 7XX XXX XXX" label="Phone Number" value={formData.phone} onChange={(v) => updateForm('phone', v)} required />
                 </div>
-                <FormInput icon={Mail} type="email" placeholder="name@example.com" label={t('auth.email')} value={formData.email} onChange={(v) => updateForm('email', v)} required />
+                <div className="space-y-1">
+                  <FormInput icon={Mail} type="email" placeholder="name@example.com" label={t('auth.email')} value={formData.email} onChange={(v) => updateForm('email', v)} required />
+                  {formData.email.length > 0 && !isEmailValid && (
+                    <p className="text-[10px] text-red-500 font-bold ml-4 uppercase tracking-tighter">Please enter a valid email address</p>
+                  )}
+                </div>
 
                 <div className="grid md:grid-cols-2 gap-6">
-                  <FormInput icon={Lock} type="password" placeholder="••••••••" label={t('auth.password')} value={formData.password} onChange={(v) => updateForm('password', v)} required />
-                  <FormInput icon={Lock} type="password" placeholder="••••••••" label="Confirm Password" value={formData.confirmPassword} onChange={(v) => updateForm('confirmPassword', v)} required />
+                  <div className="space-y-1">
+                    <FormInput icon={Lock} type="password" placeholder="••••••••" label={t('auth.password')} value={formData.password} onChange={(v) => updateForm('password', v)} required />
+                    {formData.password.length > 0 && !isPasswordValid && (
+                      <p className="text-[10px] text-red-500 font-bold ml-4 uppercase tracking-tighter">Password must be at least 6 characters</p>
+                    )}
+                  </div>
+                  <div className="space-y-1">
+                    <FormInput icon={Lock} type="password" placeholder="••••••••" label="Confirm Password" value={formData.confirmPassword} onChange={(v) => updateForm('confirmPassword', v)} required />
+                    {formData.confirmPassword.length > 0 && !passwordsMatch && (
+                      <p className="text-[10px] text-red-500 font-bold ml-4 uppercase tracking-tighter">Passwords do not match</p>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
@@ -372,8 +410,12 @@ const RegisterPage: React.FC = () => {
 
               <button
                 type="submit"
-                disabled={isLoading}
-                className="premium-btn bg-primary-light text-white shadow-[0_10px_20px_-10px_rgba(254,119,67,0.5)] hover:shadow-[0_20px_40px_-10px_rgba(254,119,67,0.6)] flex items-center gap-2 px-8 py-4 text-lg ml-auto"
+                disabled={isLoading || !isCurrentStepValid}
+                className={`premium-btn flex items-center gap-2 px-8 py-4 text-lg ml-auto transition-all duration-300 ${
+                  isLoading || !isCurrentStepValid 
+                  ? 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed shadow-none' 
+                  : 'bg-primary-light text-white shadow-[0_10px_20px_-10px_rgba(254,119,67,0.5)] hover:shadow-[0_20px_40px_-10px_rgba(254,119,67,0.6)]'
+                }`}
               >
                 {isLoading ? (
                   <>

@@ -46,3 +46,22 @@
   opacity: 0;
   transform: translateY(30px);
 }
+
+/* Fix for whitish background on autofilled inputs */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: inherit !important;
+  transition: background-color 5000s ease-in-out 0s !important;
+  box-shadow: inset 0 0 0 1000px transparent !important;
+}
+
+/* Ensure inputs remain transparent and respect dark mode */
+input {
+  background-color: transparent !important;
+  color-scheme: dark light;
+}
+
+
