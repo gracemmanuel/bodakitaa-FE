@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
-  MapPin, TrendingUp, Clock, Star, Navigation, Calendar,
+  MapPin, TrendingUp, Clock, Star, Navigation as NavigationIcon, Calendar,
   CreditCard, Search, Filter, MoreHorizontal, Shield,
   AlertCircle, CheckCircle2, Activity, Map as MapIcon,
   PhoneCall, Smartphone
 } from 'lucide-react';
 import DashboardLayout from '../layouts/DashboardLayout';
+import BookRideModal from '../components/BookRideModal';
+import MapComponent from '../components/MapComponent';
 
 // --- Types ---
 interface RideHistory {
@@ -306,9 +308,11 @@ const WalletSection: React.FC = () => (
 
 // --- Main Page Component ---
 const ClientDashboard: React.FC = () => {
+  const [isBookingOpen, setIsBookingOpen] = React.useState(false);
 
   return (
     <DashboardLayout role="client">
+      <BookRideModal isOpen={isBookingOpen} onClose={() => setIsBookingOpen(false)} />
       <div className="max-w-7xl mx-auto space-y-8 w-full">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
@@ -320,8 +324,11 @@ const ClientDashboard: React.FC = () => {
               You have taken 142 rides with us. Thank you for choosing BodaKitaa!
             </p>
           </div>
-          <button className="premium-btn bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xl flex items-center gap-2">
-            <Navigation size={18} /> Book a Ride Now
+          <button 
+            onClick={() => setIsBookingOpen(true)}
+            className="premium-btn bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xl flex items-center gap-2 hover:scale-105 transition-transform active:scale-95"
+          >
+            <NavigationIcon size={18} /> Book a Ride Now
           </button>
         </div>
 
@@ -335,15 +342,17 @@ const ClientDashboard: React.FC = () => {
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-          {/* If there is an active ride, show it spanning across */}
-          <ActiveRideCard />
-
-          <div className="xl:col-span-2">
-            <RideHistoryTable />
+          {/* Map View Section */}
+          <div className="col-span-full xl:col-span-2 h-[400px] xl:h-[600px]">
+            <MapComponent className="shadow-2xl" />
           </div>
 
           <div className="xl:col-span-1 h-auto xl:h-[600px]">
             <WalletSection />
+          </div>
+
+          <div className="col-span-full">
+            <RideHistoryTable />
           </div>
         </div>
       </div>
