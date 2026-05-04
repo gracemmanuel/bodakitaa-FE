@@ -5,7 +5,8 @@ import {
   ChevronRight, Calendar, TrendingUp, AlertTriangle,
   CheckCircle2, Flame, Target, Battery, SignalHigh
 } from 'lucide-react';
-import DashboardLayout from '../layouts/DashboardLayout';
+import CombinedNav from '../components/CombinedNav';
+import { getTimeBasedGreeting } from '../utils/greeting';
 
 // --- Types ---
 interface EarningData {
@@ -229,9 +230,15 @@ const RiderDashboard: React.FC = () => {
   const { t } = useTranslation();
   // Set to true to see the incoming request UI
   const [showIncoming, setShowIncoming] = useState(false);
+  const [user, setUser] = useState<any>(null);
+
+  React.useEffect(() => {
+    const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+    setUser(storedUser);
+  }, []);
 
   return (
-    <DashboardLayout role="rider">
+    <CombinedNav role="rider">
       <div className="max-w-7xl mx-auto space-y-8 w-full relative">
         {/* Toggle overlay for demo purposes */}
         <button
@@ -245,7 +252,7 @@ const RiderDashboard: React.FC = () => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
           <div>
             <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
-              Hello, <span className="text-primary-light">Juma Ali</span>
+              {getTimeBasedGreeting()}, <span className="text-primary-light">{user?.fullName || user?.full_name || 'Rider'}</span>
             </h1>
             <p className="text-slate-600 dark:text-slate-400 mt-2 font-medium">
               You are assigned to <span className="font-bold">TVS HLX 150 (MC 123 ABC)</span> under fleet owner <b>Baraka M.</b>
@@ -301,7 +308,7 @@ const RiderDashboard: React.FC = () => {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </CombinedNav>
   );
 };
 

@@ -4,6 +4,8 @@ import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ClientDashboard from './pages/ClientDashboard';
+import ClientRidesPage from './pages/ClientRidesPage';
+import RequestRidePage from './pages/RequestRidePage';
 import RiderDashboard from './pages/RiderDashboard';
 import OwnerDashboard from './pages/OwnerDashboard';
 import AdminDashboard from './pages/AdminDashboard';
@@ -22,6 +24,8 @@ function App() {
             
             {/* Dashboards */}
             <Route path="/dashboard/client" element={<ClientDashboard />} />
+            <Route path="/dashboard/client/rides" element={<ClientRidesPage />} />
+            <Route path="/dashboard/client/request" element={<RequestRidePage />} />
             <Route path="/dashboard/rider" element={<RiderDashboard />} />
             <Route path="/dashboard/owner" element={<OwnerDashboard />} />
             <Route path="/dashboard/admin" element={<AdminDashboard />} />

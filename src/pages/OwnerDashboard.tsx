@@ -5,7 +5,8 @@ import {
   Search, Filter, MoreHorizontal, AlertTriangle, CheckCircle,
   Clock, Activity, MapPin, Wrench, FileText, Download, ChevronRight, ChevronDown, Star
 } from 'lucide-react';
-import DashboardLayout from '../layouts/DashboardLayout';
+import CombinedNav from '../components/CombinedNav';
+import { getTimeBasedGreeting } from '../utils/greeting';
 
 // --- Types ---
 interface BikeData {
@@ -265,15 +266,21 @@ const BikeManagementTable: React.FC = () => {
 // --- Main Page Component ---
 const OwnerDashboard: React.FC = () => {
   const { t } = useTranslation();
+  const [user, setUser] = useState<any>(null);
+
+  React.useEffect(() => {
+    const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+    setUser(storedUser);
+  }, []);
 
   return (
-    <DashboardLayout role="owner">
+    <CombinedNav role="owner">
       <div className="max-w-7xl mx-auto space-y-8 w-full">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
           <div>
             <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
-              Fleet Overview
+              {getTimeBasedGreeting()}, <span className="text-primary-light">{user?.fullName || user?.full_name || 'Owner'}</span>
             </h1>
             <p className="text-slate-600 dark:text-slate-400 mt-2 font-medium">
               You have <span className="font-bold text-primary-light">6 bikes</span> registered. 4 are currently active on the road.
@@ -334,7 +341,7 @@ const OwnerDashboard: React.FC = () => {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </CombinedNav>
   );
 };
 

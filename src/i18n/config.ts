@@ -34,7 +34,7 @@ const resources = {
         "have_account": "Already have an account?"
       },
       "dashboard": {
-        "overview": "Overview",
+        "overview": "Dashboard",
         "rides": "My Rides",
         "wallet": "Wallet",
         "fleet": "Fleet Management",

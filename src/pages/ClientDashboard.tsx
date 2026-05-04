@@ -5,9 +5,10 @@ import {
   AlertCircle, CheckCircle2, Activity, Map as MapIcon,
   PhoneCall, Smartphone
 } from 'lucide-react';
-import DashboardLayout from '../layouts/DashboardLayout';
+import CombinedNav from '../components/CombinedNav';
 import BookRideModal from '../components/BookRideModal';
 import MapComponent from '../components/MapComponent';
+import { getTimeBasedGreeting } from '../utils/greeting';
 
 // --- Types ---
 interface RideHistory {
@@ -40,28 +41,6 @@ interface UserStats {
   carbonSaved: number;
 }
 
-// --- Dummy Data ---
-const mockRides: RideHistory[] = [
-  { id: 'RD-9021', driver: { name: 'Juma Ali', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Juma', rating: 4.9, phone: '+255 712 345 678', bikeDetails: 'Boxer BM 150 (MC 123 ABC)' }, pickup: 'Mlimani City Mall', destination: 'Posta, Dar es Salaam', date: '2026-04-27', time: '14:30', amount: 5000, status: 'Completed', distance: '12.5 km', duration: '35 mins', paymentMethod: 'M-Pesa' },
-  { id: 'RD-8834', driver: { name: 'Kassim Hassan', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Kassim', rating: 4.7, phone: '+255 754 123 987', bikeDetails: 'TVS HLX (MC 987 XYZ)' }, pickup: 'Masaki, Slipway', destination: 'Oysterbay', date: '2026-04-26', time: '09:15', amount: 2500, status: 'Completed', distance: '3.2 km', duration: '12 mins', paymentMethod: 'Wallet' },
-  { id: 'RD-7712', driver: { name: 'Baraka John', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Baraka', rating: 4.2, phone: '+255 789 456 123', bikeDetails: 'Honda Ace (MC 456 DEF)' }, pickup: 'Mwenge Bus Stand', destination: 'Makumbusho Village', date: '2026-04-25', time: '18:45', amount: 3000, status: 'Cancelled', distance: '4.8 km', duration: '--', paymentMethod: 'Cash' },
-  { id: 'RD-6643', driver: { name: 'Ali M.', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ali', rating: 5.0, phone: '+255 733 999 888', bikeDetails: 'SanLG (MC 111 AAA)' }, pickup: 'Kigamboni Ferry', destination: 'Kigamboni City', date: '2026-04-20', time: '07:30', amount: 4500, status: 'Completed', distance: '8.0 km', duration: '25 mins', paymentMethod: 'Airtel Money' },
-  { id: 'RD-5511', driver: { name: 'Said Said', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Said', rating: 4.8, phone: '+255 722 333 444', bikeDetails: 'Boxer BM 150 (MC 222 BBB)' }, pickup: 'Ubungo Terminal', destination: 'Magomeni', date: '2026-04-18', time: '21:00', amount: 6000, status: 'Completed', distance: '15.2 km', duration: '40 mins', paymentMethod: 'M-Pesa' },
-];
-
-const mockStats: UserStats = {
-  totalRides: 142,
-  totalSpent: 450000, // TZS
-  loyaltyPoints: 1250,
-  carbonSaved: 45.2 // kg CO2
-};
-
-const mockPaymentMethods: PaymentMethod[] = [
-  { id: 'pm_1', type: 'Mobile Money', provider: 'M-Pesa', isDefault: true },
-  { id: 'pm_2', type: 'Visa', last4: '4242', isDefault: false },
-  { id: 'pm_3', type: 'Mobile Money', provider: 'Tigo Pesa', isDefault: false },
-];
-
 // --- Sub-Components ---
 
 const StatCard: React.FC<{ title: string; value: string | number; icon: React.ElementType; color: string; subtitle?: string; trend?: { value: number; isUp: boolean } }> = ({ title, value, icon: Icon, color, subtitle, trend }) => (
@@ -86,9 +65,10 @@ const StatCard: React.FC<{ title: string; value: string | number; icon: React.El
   </div>
 );
 
-const ActiveRideCard: React.FC = () => (
-  <div className="col-span-full xl:col-span-2 bg-gradient-to-br from-primary-dark via-slate-900 to-black rounded-3xl border border-white/10 overflow-hidden relative shadow-2xl flex flex-col md:flex-row">
-    {/* Abstract Map Background for aesthetics */}
+const ActiveRideCard: React.FC<{ ride: any }> = ({ ride }) => {
+  if (!ride) return null;
+  return (
+  <div className="col-span-full xl:col-span-3 bg-gradient-to-br from-primary-dark via-slate-900 to-black rounded-3xl border border-white/10 overflow-hidden relative shadow-2xl flex flex-col md:flex-row mb-8">
     <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 50% 50%, rgba(255,255,255,0.1) 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
       <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
         <path d="M 10 90 Q 50 10 90 90" fill="none" stroke="#FE7743" strokeWidth="0.5" strokeDasharray="2 1" className="animate-[dash_10s_linear_infinite]" />
@@ -96,13 +76,13 @@ const ActiveRideCard: React.FC = () => (
     </div>
 
     <div className="p-8 md:w-1/2 flex flex-col justify-center relative z-10">
-      <div className="inline-flex items-center gap-2 bg-green-500/20 border border-green-500/50 text-green-400 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-6 w-max animate-pulse">
-        <div className="w-2 h-2 rounded-full bg-green-400" />
-        Ride in Progress
+      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-6 w-max ${ride.status === 'pending' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50' : 'bg-green-500/20 text-green-400 border border-green-500/50 animate-pulse'}`}>
+        <div className={`w-2 h-2 rounded-full ${ride.status === 'pending' ? 'bg-amber-400' : 'bg-green-400'}`} />
+        {ride.status.replace('_', ' ')}
       </div>
 
-      <h3 className="text-3xl font-black text-white mb-2">Heading to Posta</h3>
-      <p className="text-slate-400 text-sm mb-8 flex items-center gap-2"><Clock size={16} /> Est. Arrival: 14:45 (12 mins)</p>
+      <h3 className="text-3xl font-black text-white mb-2 line-clamp-1">{ride.destination_address}</h3>
+      <p className="text-slate-400 text-sm mb-8 flex items-center gap-2"><Clock size={16} /> Est. Fare: TZS {parseFloat(ride.base_fare).toLocaleString()}</p>
 
       <div className="space-y-6">
         <div className="flex gap-4 relative">
@@ -110,7 +90,7 @@ const ActiveRideCard: React.FC = () => (
           <div className="w-6 h-6 rounded-full bg-slate-800 border-4 border-slate-600 z-10 flex-shrink-0 mt-1" />
           <div>
             <p className="text-xs text-slate-500 font-bold uppercase">Pickup</p>
-            <p className="text-white font-medium">Mlimani City Mall, Block C</p>
+            <p className="text-white font-medium line-clamp-1">{ride.pickup_address}</p>
           </div>
         </div>
         <div className="flex gap-4 relative">
@@ -119,7 +99,7 @@ const ActiveRideCard: React.FC = () => (
           </div>
           <div>
             <p className="text-xs text-primary-light font-bold uppercase">Destination</p>
-            <p className="text-white font-medium">Posta, Askari Monument</p>
+            <p className="text-white font-medium line-clamp-1">{ride.destination_address}</p>
           </div>
         </div>
       </div>
@@ -127,20 +107,20 @@ const ActiveRideCard: React.FC = () => (
 
     <div className="p-8 md:w-1/2 bg-white/5 backdrop-blur-md border-l border-white/10 flex flex-col justify-between relative z-10">
       <div className="bg-black/50 rounded-2xl p-4 border border-white/5 flex items-center gap-4">
-        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Ali" alt="Driver" className="w-16 h-16 rounded-xl bg-slate-800" />
+        <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${ride.rider_name || 'Driver'}`} alt="Driver" className="w-16 h-16 rounded-xl bg-slate-800" />
         <div className="flex-1">
-          <h4 className="text-white font-bold text-lg">Ali Mohamed</h4>
+          <h4 className="text-white font-bold text-lg">{ride.rider_name || 'Finding Rider...'}</h4>
           <p className="text-slate-400 text-sm flex items-center gap-1">
-            <Star size={14} className="text-amber-500 fill-current" /> 4.9 (1.2k trips)
+            <Star size={14} className="text-amber-500 fill-current" /> 4.9
           </p>
-          <p className="text-xs text-slate-500 mt-1">Boxer BM 150</p>
         </div>
+        {ride.rider_name && (
         <div className="text-right">
-          <div className="bg-primary-light/20 text-primary-light font-black px-3 py-1 rounded-lg text-sm border border-primary-light/30 mb-2">MC 882 XYZ</div>
           <button className="w-10 h-10 rounded-full bg-slate-800 text-white flex items-center justify-center hover:bg-slate-700 transition-colors ml-auto">
             <PhoneCall size={16} />
           </button>
         </div>
+        )}
       </div>
 
       <div className="mt-8 flex gap-4">
@@ -153,9 +133,9 @@ const ActiveRideCard: React.FC = () => (
       </div>
     </div>
   </div>
-);
+)};
 
-const RideHistoryTable: React.FC = () => {
+const RideHistoryTable: React.FC<{ rides: any[] }> = ({ rides }) => {
   return (
     <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl overflow-hidden flex flex-col h-[500px] md:h-[600px]">
       <div className="p-6 border-b border-slate-200 dark:border-white/10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-50 dark:bg-transparent">
@@ -187,57 +167,89 @@ const RideHistoryTable: React.FC = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 dark:divide-white/5">
-            {mockRides.map((ride) => (
+            {rides.length === 0 ? (
+              <tr><td colSpan={5} className="text-center py-8 text-slate-500">No rides found.</td></tr>
+            ) : rides.map((ride: any) => (
               <tr key={ride.id} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group">
                 <td className="px-6 py-4">
                   <div className="flex items-start gap-4">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${ride.status === 'Completed' ? 'bg-green-500/10 text-green-500' : ride.status === 'Cancelled' ? 'bg-red-500/10 text-red-500' : 'bg-primary-light/10 text-primary-light'}`}>
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${ride.status === 'completed' ? 'bg-green-500/10 text-green-500' : ride.status === 'cancelled' ? 'bg-red-500/10 text-red-500' : 'bg-primary-light/10 text-primary-light'}`}>
                       <MapIcon size={20} />
                     </div>
                     <div>
-                      <p className="font-bold text-slate-900 dark:text-white text-sm line-clamp-1">{ride.destination}</p>
+                      <p className="font-bold text-slate-900 dark:text-white text-sm line-clamp-1">{ride.destination_address}</p>
                       <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400" /> {ride.pickup}
+                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400" /> {ride.pickup_address}
                       </p>
-                      <p className="text-[10px] font-mono text-slate-400 mt-1">{ride.id}</p>
+                      <p className="text-[10px] font-mono text-slate-400 mt-1">ID: {ride.id}</p>
                     </div>
                   </div>
                 </td>
 
                 <td className="px-6 py-4 hidden md:table-cell">
                   <div className="flex items-center gap-3">
-                    <img src={ride.driver.avatar} alt={ride.driver.name} className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800" />
+                    <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${ride.rider_name || 'Driver'}`} alt={ride.rider_name || 'Driver'} className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800" />
                     <div>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white">{ride.driver.name}</p>
-                      <div className="flex items-center gap-1 text-[10px] font-bold text-amber-500">
-                        <Star size={10} className="fill-current" /> {ride.driver.rating}
-                      </div>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white">{ride.rider_name || 'Pending'}</p>
                     </div>
                   </div>
                 </td>
 
                 <td className="px-6 py-4 hidden lg:table-cell text-sm text-slate-600 dark:text-slate-400">
-                  <div className="flex items-center gap-2"><Calendar size={14} /> {ride.date}</div>
-                  <div className="flex items-center gap-2 mt-1 text-xs opacity-70"><Clock size={12} /> {ride.time} ({ride.duration})</div>
+                  <div className="flex items-center gap-2"><Calendar size={14} /> {new Date(ride.requested_at).toLocaleDateString()}</div>
+                  <div className="flex items-center gap-2 mt-1 text-xs opacity-70"><Clock size={12} /> {new Date(ride.requested_at).toLocaleTimeString()}</div>
                 </td>
 
                 <td className="px-6 py-4">
-                  <p className="text-sm font-black text-slate-900 dark:text-white">TZS {ride.amount.toLocaleString()}</p>
-                  <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider mt-1 ${ride.status === 'Completed' ? 'bg-green-500/20 text-green-600 dark:text-green-400' :
-                    ride.status === 'Cancelled' ? 'bg-red-500/20 text-red-600 dark:text-red-400' :
+                  <p className="text-sm font-black text-slate-900 dark:text-white">TZS {parseFloat(ride.base_fare).toLocaleString()}</p>
+                  <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider mt-1 ${ride.status === 'completed' ? 'bg-green-500/20 text-green-600 dark:text-green-400' :
+                    ride.status === 'cancelled' ? 'bg-red-500/20 text-red-600 dark:text-red-400' :
                       'bg-amber-500/20 text-amber-600 dark:text-amber-400'
                     }`}>
-                    {ride.status === 'Completed' && <CheckCircle2 size={10} />}
-                    {ride.status === 'Cancelled' && <AlertCircle size={10} />}
-                    {ride.status === 'In Progress' && <Activity size={10} />}
+                    {ride.status === 'completed' && <CheckCircle2 size={10} />}
+                    {ride.status === 'cancelled' && <AlertCircle size={10} />}
+                    {['pending', 'accepted', 'in_progress'].includes(ride.status) && <Activity size={10} />}
                     {ride.status}
                   </div>
                 </td>
 
                 <td className="px-6 py-4 text-right">
-                  <button className="p-2 text-slate-400 hover:text-primary-light hover:bg-primary-light/10 rounded-lg transition-colors">
-                    <MoreHorizontal size={20} />
-                  </button>
+                  {ride.status === 'completed' && !ride.rating ? (
+                    <button 
+                      onClick={async () => {
+                        const stars = window.prompt("Rate this ride (1-5 stars):", "5");
+                        if (stars && parseInt(stars) >= 1 && parseInt(stars) <= 5) {
+                          try {
+                            const { graphqlClient } = await import('../api/index');
+                            const rateMutation = `
+                              mutation($rideId: Int!, $stars: Int!, $comment: String) {
+                                rateRide(rideId: $rideId, stars: $stars, comment: $comment) {
+                                  success
+                                  message
+                                }
+                              }
+                            `;
+                            await graphqlClient(rateMutation, {
+                              rideId: parseInt(ride.id),
+                              stars: parseInt(stars),
+                              comment: "Good ride"
+                            });
+                            alert("Thank you for your rating!");
+                            window.location.reload();
+                          } catch (e) {
+                            alert("Failed to submit rating.");
+                          }
+                        }
+                      }}
+                      className="px-3 py-1 bg-amber-500/10 text-amber-500 text-xs font-bold rounded-lg hover:bg-amber-500/20 transition-colors flex items-center gap-1 ml-auto"
+                    >
+                      <Star size={12} className="fill-current" /> Rate
+                    </button>
+                  ) : (
+                    <button className="p-2 text-slate-400 hover:text-primary-light hover:bg-primary-light/10 rounded-lg transition-colors ml-auto">
+                      <MoreHorizontal size={20} />
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}
@@ -246,14 +258,7 @@ const RideHistoryTable: React.FC = () => {
       </div>
 
       <div className="p-4 border-t border-slate-200 dark:border-white/10 flex justify-between items-center bg-slate-50 dark:bg-transparent">
-        <p className="text-xs font-bold text-slate-500">Showing 5 of 142 rides</p>
-        <div className="flex gap-1">
-          <button className="w-8 h-8 rounded border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-400 cursor-not-allowed">&lt;</button>
-          <button className="w-8 h-8 rounded bg-primary-light text-white font-bold flex items-center justify-center">1</button>
-          <button className="w-8 h-8 rounded border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 flex items-center justify-center font-bold">2</button>
-          <button className="w-8 h-8 rounded border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 flex items-center justify-center font-bold">3</button>
-          <button className="w-8 h-8 rounded border border-slate-200 dark:border-white/10 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-white/5">&gt;</button>
-        </div>
+        <p className="text-xs font-bold text-slate-500">Showing {rides.length} rides</p>
       </div>
     </div>
   );
@@ -266,7 +271,7 @@ const WalletSection: React.FC = () => (
     <div className="flex justify-between items-start mb-8 relative z-10">
       <div>
         <p className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-1">BodaKitaa Wallet</p>
-        <h3 className="text-4xl font-black tracking-tight">TZS 45,000</h3>
+        <h3 className="text-4xl font-black tracking-tight">TZS 0</h3>
       </div>
       <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-md">
         <CreditCard size={24} className="text-white" />
@@ -284,23 +289,9 @@ const WalletSection: React.FC = () => (
         <button className="text-xs text-primary-light font-bold hover:underline">Manage</button>
       </div>
       <div className="space-y-3">
-        {mockPaymentMethods.map((pm) => (
-          <div key={pm.id} className="flex items-center justify-between p-3 rounded-xl bg-black/40 border border-white/5">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center">
-                {pm.type === 'Visa' ? <CreditCard size={18} className="text-blue-400" /> : <Smartphone size={18} className="text-green-400" />}
-              </div>
-              <div>
-                <p className="font-bold text-sm">{pm.provider || pm.type}</p>
-                {pm.last4 && <p className="text-xs text-slate-400">•••• {pm.last4}</p>}
-              </div>
-            </div>
-            {pm.isDefault && <span className="bg-primary-light/20 text-primary-light text-[10px] font-black uppercase px-2 py-1 rounded">Default</span>}
-          </div>
-        ))}
-        <button className="w-full py-3 rounded-xl border border-dashed border-white/20 text-sm font-bold text-slate-300 hover:bg-white/5 transition-colors flex items-center justify-center gap-2">
-          + Add New Method
-        </button>
+        <div className="flex items-center justify-between p-3 rounded-xl bg-black/40 border border-white/5 text-slate-400 text-sm">
+           Cash Only Supported Right Now
+        </div>
       </div>
     </div>
   </div>
@@ -309,19 +300,78 @@ const WalletSection: React.FC = () => (
 // --- Main Page Component ---
 const ClientDashboard: React.FC = () => {
   const [isBookingOpen, setIsBookingOpen] = React.useState(false);
+  const [rides, setRides] = React.useState<any[]>([]);
+  const [user, setUser] = React.useState<any>(null);
+  const [stats, setStats] = React.useState({ totalRides: 0, totalSpent: 0, loyaltyPoints: 0, carbonSaved: 0 });
+
+  React.useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+        setUser(storedUser);
+
+        const { graphqlClient } = await import('../api/index');
+        const ridesQuery = `
+          query {
+            myRides {
+              id
+              status
+              vehicleType
+              pickupAddress
+              pickupLat
+              pickupLng
+              destinationAddress
+              destinationLat
+              destinationLng
+              baseFare
+              requestedAt
+              rider {
+                id
+                fullName
+              }
+            }
+          }
+        `;
+        const ridesData = await graphqlClient(ridesQuery);
+        // Rename keys to match existing format where needed
+        const formattedRides = ridesData.myRides.map((r: any) => ({
+          ...r,
+          rider_name: r.rider ? r.rider.fullName : null,
+          pickup_address: r.pickupAddress,
+          destination_address: r.destinationAddress,
+          base_fare: r.baseFare,
+          requested_at: r.requestedAt
+        }));
+        
+        setRides(formattedRides);
+
+        const totalSpent = formattedRides.reduce((acc: number, ride: any) => acc + parseFloat(ride.base_fare || 0), 0);
+        setStats({
+          totalRides: ridesData.length,
+          totalSpent: totalSpent,
+          loyaltyPoints: Math.floor(totalSpent / 1000),
+          carbonSaved: ridesData.length * 0.5
+        });
+
+      } catch (error) {
+        console.error("Failed to fetch dashboard data:", error);
+      }
+    };
+    fetchDashboardData();
+  }, []);
 
   return (
-    <DashboardLayout role="client">
+    <CombinedNav role="client">
       <BookRideModal isOpen={isBookingOpen} onClose={() => setIsBookingOpen(false)} />
       <div className="max-w-7xl mx-auto space-y-8 w-full">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
           <div>
             <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
-              Good afternoon, <span className="text-primary-light">John Doe</span>
+              {getTimeBasedGreeting()}, <span className="text-primary-light">{user?.fullName || user?.full_name || 'Rider'}</span>
             </h1>
             <p className="text-slate-600 dark:text-slate-400 mt-2 font-medium">
-              You have taken 142 rides with us. Thank you for choosing BodaKitaa!
+              You have taken {stats.totalRides} rides with us. Thank you for choosing BodaKitaa!
             </p>
           </div>
           <button 
@@ -334,14 +384,19 @@ const ClientDashboard: React.FC = () => {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard title="Total Rides" value={mockStats.totalRides} icon={MapPin} color="text-blue-500" trend={{ value: 12, isUp: true }} />
-          <StatCard title="Total Spent" value={`TZS ${(mockStats.totalSpent / 1000)}k`} icon={CreditCard} color="text-green-500" />
-          <StatCard title="Loyalty Points" value={mockStats.loyaltyPoints} icon={Star} color="text-amber-500" subtitle="Gold Tier Member" />
-          <StatCard title="CO2 Saved" value={`${mockStats.carbonSaved} kg`} icon={Activity} color="text-primary-light" subtitle="Compared to cars" />
+          <StatCard title="Total Rides" value={stats.totalRides} icon={MapPin} color="text-blue-500" trend={{ value: 12, isUp: true }} />
+          <StatCard title="Total Spent" value={`TZS ${(stats.totalSpent / 1000).toFixed(1)}k`} icon={CreditCard} color="text-green-500" />
+          <StatCard title="Loyalty Points" value={stats.loyaltyPoints} icon={Star} color="text-amber-500" subtitle="Gold Tier Member" />
+          <StatCard title="CO2 Saved" value={`${stats.carbonSaved} kg`} icon={Activity} color="text-primary-light" subtitle="Compared to cars" />
         </div>
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+          
+          {rides.find((r: any) => ['pending', 'accepted', 'in_progress'].includes(r.status)) && (
+             <ActiveRideCard ride={rides.find((r: any) => ['pending', 'accepted', 'in_progress'].includes(r.status))} />
+          )}
+
           {/* Map View Section */}
           <div className="col-span-full xl:col-span-2 h-[400px] xl:h-[600px]">
             <MapComponent className="shadow-2xl" />
@@ -352,11 +407,11 @@ const ClientDashboard: React.FC = () => {
           </div>
 
           <div className="col-span-full">
-            <RideHistoryTable />
+            <RideHistoryTable rides={rides} />
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </CombinedNav>
   );
 };
 

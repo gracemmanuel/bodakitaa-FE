@@ -4,7 +4,8 @@ import {
   Activity, CheckCircle, XCircle, Search, MoreVertical,
   TrendingUp, TrendingDown, Server, Database, Globe, Clock
 } from 'lucide-react';
-import DashboardLayout from '../layouts/DashboardLayout';
+import CombinedNav from '../components/CombinedNav';
+import { getTimeBasedGreeting } from '../utils/greeting';
 
 // --- Types ---
 interface VerificationRequest {
@@ -191,15 +192,21 @@ const SystemStatus: React.FC = () => (
 );
 
 const AdminDashboard: React.FC = () => {
+  const [user, setUser] = React.useState<any>(null);
+
+  React.useEffect(() => {
+    const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+    setUser(storedUser);
+  }, []);
 
   return (
-    <DashboardLayout role="admin">
+    <CombinedNav role="admin">
       <div className="max-w-[1600px] mx-auto space-y-8 w-full">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
           <div>
             <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
-              Command Center
+              {getTimeBasedGreeting()}, <span className="text-primary-light">{user?.fullName || user?.full_name || 'Admin'}</span>
             </h1>
             <p className="text-slate-600 dark:text-slate-400 mt-2 font-medium">
               Platform-wide overview, moderation, and system health monitoring.
@@ -261,7 +268,7 @@ const AdminDashboard: React.FC = () => {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </CombinedNav>
   );
 };
 

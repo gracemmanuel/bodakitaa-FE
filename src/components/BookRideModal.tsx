@@ -18,10 +18,45 @@ const BookRideModal: React.FC<BookRideModalProps> = ({ isOpen, onClose }) => {
   const backdropRef = useRef<HTMLDivElement>(null);
   const [pickup, setPickup] = useState('');
   const [destination, setDestination] = useState('');
-  const [rideType, setRideType] = useState<RideType>('Economy');
-  const [paymentMethod, setPaymentMethod] = useState('BodaWallet');
+  const [paymentMethod, setPaymentMethod] = useState('Cash');
   const [isConfirming, setIsConfirming] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [estimate, setEstimate] = useState<{ fare: number, distance: number } | null>(null);
+  const [createdRide, setCreatedRide] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchEstimate = async () => {
+      if (pickup && destination) {
+        try {
+          const { graphqlClient } = await import('../api/index');
+          const estimateMutation = `
+            mutation($pickupLat: Float!, $pickupLng: Float!, $destinationLat: Float!, $destinationLng: Float!, $vehicleType: String!) {
+              estimateRide(pickupLat: $pickupLat, pickupLng: $pickupLng, destinationLat: $destinationLat, destinationLng: $destinationLng, vehicleType: $vehicleType) {
+                estimate {
+                  estimatedDistanceKm
+                  estimatedFareTzs
+                }
+              }
+            }
+          `;
+          const data = await graphqlClient(estimateMutation, {
+            pickupLat: -6.7924,
+            pickupLng: 39.2083,
+            destinationLat: -6.8235,
+            destinationLng: 39.2695,
+            vehicleType: 'economy'
+          });
+          setEstimate({ fare: data.estimateRide.estimate.estimatedFareTzs, distance: data.estimateRide.estimate.estimatedDistanceKm });
+        } catch (error) {
+          console.error("Estimate error", error);
+        }
+      } else {
+        setEstimate(null);
+      }
+    };
+    const timeoutId = setTimeout(fetchEstimate, 500);
+    return () => clearTimeout(timeoutId);
+  }, [pickup, destination]);
 
   useEffect(() => {
     if (isOpen) {
@@ -38,16 +73,46 @@ const BookRideModal: React.FC<BookRideModalProps> = ({ isOpen, onClose }) => {
     gsap.to(backdropRef.current, { opacity: 0, duration: 0.3 });
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     setIsConfirming(true);
-    setTimeout(() => {
-      setIsConfirming(false);
+    try {
+      const { graphqlClient } = await import('../api/index');
+      const requestMutation = `
+        mutation($pickupAddress: String!, $destinationAddress: String!, $pickupLat: Float!, $pickupLng: Float!, $destinationLat: Float!, $destinationLng: Float!, $vehicleType: String!) {
+          requestRide(pickupAddress: $pickupAddress, destinationAddress: $destinationAddress, pickupLat: $pickupLat, pickupLng: $pickupLng, destinationLat: $destinationLat, destinationLng: $destinationLng, vehicleType: $vehicleType) {
+            ride {
+              id
+              pickupAddress
+              destinationAddress
+            }
+          }
+        }
+      `;
+      const data = await graphqlClient(requestMutation, {
+        pickupAddress: pickup,
+        destinationAddress: destination,
+        pickupLat: -6.7924,
+        pickupLng: 39.2083,
+        destinationLat: -6.8235,
+        destinationLng: 39.2695,
+        vehicleType: 'economy'
+      });
+      setCreatedRide({
+        id: data.requestRide.ride.id,
+        pickup_address: data.requestRide.ride.pickupAddress,
+        destination_address: data.requestRide.ride.destinationAddress
+      });
       setIsSuccess(true);
       setTimeout(() => {
         setIsSuccess(false);
         handleClose();
+        window.location.reload(); // Quick refresh to show new ride in list
       }, 2500);
-    }, 2000);
+    } catch (error) {
+      console.error("Booking error", error);
+    } finally {
+      setIsConfirming(false);
+    }
   };
 
   if (!isOpen && !isSuccess) return null;
@@ -73,18 +138,12 @@ const BookRideModal: React.FC<BookRideModalProps> = ({ isOpen, onClose }) => {
             </div>
             <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-2">Ride Booked!</h2>
             <p className="text-slate-500 dark:text-slate-400 font-medium mb-8">
-              Ali Mohamed is on his way to your location. He will arrive in approximately 8 minutes.
+              Your ride has been requested. Waiting for a rider to accept.
             </p>
             <div className="bg-slate-50 dark:bg-white/5 rounded-2xl p-4 border border-slate-200 dark:border-white/5 flex items-center gap-4 text-left">
-              <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Ali" alt="Driver" className="w-12 h-12 rounded-xl bg-slate-200 dark:bg-slate-800" />
               <div className="flex-1">
-                <p className="font-bold text-slate-900 dark:text-white">Ali Mohamed</p>
-                <p className="text-xs text-slate-500">MC 882 XYZ • Boxer BM 150</p>
-              </div>
-              <div className="text-right">
-                <div className="flex items-center gap-1 text-amber-500 font-bold text-xs">
-                  <Star size={12} className="fill-current" /> 4.9
-                </div>
+                <p className="font-bold text-slate-900 dark:text-white">Ride #{createdRide?.id}</p>
+                <p className="text-xs text-slate-500">{createdRide?.pickup_address} → {createdRide?.destination_address}</p>
               </div>
             </div>
           </div>
@@ -158,9 +217,7 @@ const BookRideModal: React.FC<BookRideModalProps> = ({ isOpen, onClose }) => {
                       onChange={(e) => setPaymentMethod(e.target.value)}
                       className="bg-transparent text-sm font-black text-primary-light focus:outline-none cursor-pointer text-right appearance-none"
                     >
-                      <option value="BodaWallet" className="text-slate-900 bg-white">BodaWallet (TZS 45k)</option>
-                      <option value="M-Pesa" className="text-slate-900 bg-white">M-Pesa</option>
-                      <option value="Cash" className="text-slate-900 bg-white">Cash on Delivery</option>
+                      <option value="Cash" className="text-slate-900 bg-white">Cash Only</option>
                     </select>
                     <ChevronDown size={14} className="text-primary-light pointer-events-none" />
                   </div>
@@ -171,14 +228,14 @@ const BookRideModal: React.FC<BookRideModalProps> = ({ isOpen, onClose }) => {
                 <div className="flex justify-between items-end">
                   <div>
                     <div className="flex items-center gap-1 text-slate-400 text-[10px] font-bold uppercase mb-1">
-                      <Clock size={12} /> Estimated Time
+                      <Clock size={12} /> Estimated Distance
                     </div>
-                    <p className="text-sm font-black text-slate-900 dark:text-white">12 - 15 Minutes</p>
+                    <p className="text-sm font-black text-slate-900 dark:text-white">{estimate ? `${estimate.distance.toFixed(1)} km` : '--'}</p>
                   </div>
                   <div className="text-right">
                     <div className="text-slate-400 text-[10px] font-bold uppercase mb-1">Estimated Fare</div>
                     <p className="text-2xl font-black text-primary-light">
-                      TZS 3,000
+                      {estimate ? `TZS ${estimate.fare.toLocaleString()}` : '--'}
                     </p>
                   </div>
                 </div>

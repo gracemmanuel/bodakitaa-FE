@@ -5,9 +5,10 @@ import gsap from 'gsap';
 import {
   User, Mail, Lock, Bike, ShieldCheck, Briefcase,
   UserCheck, ArrowRight, CheckCircle2,
-  Phone, MapPin, Upload, Building2, CreditCard
+  Phone, MapPin, Upload, Building2, CreditCard, AlertCircle
 } from 'lucide-react';
-import Navbar from '../components/Navbar';
+import Nav from '../components/Nav';
+import { graphqlClient } from '../api';
 
 // --- Types ---
 type Role = 'client' | 'rider' | 'owner';
@@ -145,6 +146,7 @@ const RegisterPage: React.FC = () => {
 
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<FormState>({
     role: 'client',
@@ -205,20 +207,70 @@ const RegisterPage: React.FC = () => {
     if (step > 1) setStep(step - 1);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const REGISTER_MUTATION = `
+    mutation Register($input: UserInput!) {
+      register(input: $input) {
+        success
+        message
+        token
+        user {
+          id
+          email
+          role
+          fullName
+        }
+      }
+    }
+  `;
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+
     if (step < 2 || (step === 2 && formData.role !== 'client')) {
       handleNextStep();
       return;
     }
 
     setIsLoading(true);
+    try {
+      const variables = {
+        input: {
+          fullName: formData.fullName,
+          email: formData.email,
+          phone: formData.phone,
+          password: formData.password,
+          role: formData.role,
+          licenseNumber: formData.licenseNumber || null,
+          plateNumber: formData.plateNumber || null,
+          companyName: formData.companyName || null,
+          taxId: formData.taxId || null,
+        }
+      };
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
+      const data = await graphqlClient(REGISTER_MUTATION, variables);
+      const result = data?.register;
+
+      if (!result?.success) {
+        setError(result?.message || 'Registration failed. Please try again.');
+        setIsLoading(false);
+        return;
+      }
+
+      // Save token and redirect
+      if (result.token) {
+        localStorage.setItem('token', result.token);
+      }
+      if (result.user) {
+        localStorage.setItem('user', JSON.stringify(result.user));
+      }
+
       navigate(`/dashboard/${formData.role}`);
-    }, 2000);
+    } catch (err: any) {
+      setError(err.message || 'An unexpected error occurred. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const isLastStep =
@@ -227,7 +279,7 @@ const RegisterPage: React.FC = () => {
 
   return (
     <div className="min-h-screen relative flex flex-col pt-20 pb-12 selection:bg-primary-light/30 selection:text-primary-light">
-      <Navbar />
+      <Nav variant="public" />
       <RegisterBackground />
 
       <div className="flex-1 max-w-5xl w-full mx-auto px-6 relative z-10 flex flex-col items-center pt-10">
@@ -393,6 +445,14 @@ const RegisterPage: React.FC = () => {
                   </div>
                 )}
 
+              </div>
+            )}
+
+            {/* Error Banner */}
+            {error && (
+              <div className="mt-6 flex items-start gap-3 p-4 rounded-2xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/50 text-red-700 dark:text-red-400">
+                <AlertCircle size={18} className="mt-0.5 shrink-0" />
+                <p className="text-sm font-semibold">{error}</p>
               </div>
             )}
 

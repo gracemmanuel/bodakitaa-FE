@@ -7,7 +7,7 @@ import {
   MapPin, Clock, Smartphone, Globe, ChevronDown, PhoneCall, Mail,
   Instagram, Twitter, Facebook, ArrowUpRight, Activity, Award
 } from 'lucide-react';
-import Navbar from '../components/Navbar';
+import Nav from '../components/Nav';
 import bodasImage from '../assets/bodas.jpeg';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -599,7 +599,7 @@ const Footer: React.FC = () => {
 const LandingPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-white dark:bg-black font-sans selection:bg-primary-light/30 selection:text-primary-light">
-      <Navbar />
+      <Nav variant="public" />
       <HeroSection />
       <FeatureSection />
       <AppInterfacePreview />

@@ -5,7 +5,7 @@ import {
   Mail, Lock, ArrowRight, Bike, ShieldCheck,
   Smartphone, Eye, EyeOff, AlertCircle, CheckCircle2
 } from 'lucide-react';
-import Navbar from '../components/Navbar';
+import Nav from '../components/Nav';
 import gsap from 'gsap';
 
 // --- Sub-Components ---
@@ -60,7 +60,7 @@ const LoginPage: React.FC = () => {
   const isEmailValid = email.length > 0 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const isPasswordValid = password.length >= 6;
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isEmailValid || !isPasswordValid) {
       setError("Please check your credentials and try again.");
@@ -70,20 +70,48 @@ const LoginPage: React.FC = () => {
     setIsLoading(true);
     setError(null);
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
-      // Demo routing based on email prefix (in reality, backend determines role)
-      if (email.startsWith('admin')) navigate('/dashboard/admin');
-      else if (email.startsWith('owner')) navigate('/dashboard/owner');
-      else if (email.startsWith('rider')) navigate('/dashboard/rider');
+    try {
+      const { graphqlClient } = await import('../api/index');
+      
+      const loginMutation = `
+        mutation($email: String!, $password: String!) {
+          tokenAuth(username: $email, password: $password) {
+            token
+          }
+        }
+      `;
+      
+      const data = await graphqlClient(loginMutation, { email, password });
+      localStorage.setItem('token', data.tokenAuth.token);
+      
+      const meQuery = `
+        query {
+          me {
+            id
+            email
+            fullName
+            role
+          }
+        }
+      `;
+      const meData = await graphqlClient(meQuery);
+      const user = meData.me;
+      localStorage.setItem('user', JSON.stringify(user));
+      
+      if (user.role === 'admin') navigate('/dashboard/admin');
+      else if (user.role === 'owner') navigate('/dashboard/owner');
+      else if (user.role === 'rider') navigate('/dashboard/rider');
       else navigate('/dashboard/client');
-    }, 1500);
+    } catch (err: any) {
+      setError(err.message || "Failed to login");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen relative flex flex-col justify-center selection:bg-primary-light/30 selection:text-primary-light">
-      <Navbar />
+      <Nav variant="public" />
       <AuthBackground />
 
       <div className="flex-1 flex items-center justify-center p-6 relative z-10 pt-24 pb-12">

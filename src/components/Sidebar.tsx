@@ -18,6 +18,7 @@ const Sidebar: React.FC<SidebarProps> = ({ role, closeSidebar }) => {
   const menuItems = {
     client: [
       { path: '/dashboard/client', icon: LayoutDashboard, label: t('dashboard.overview') },
+      { path: '/dashboard/client/request', icon: Bike, label: 'Request Ride' },
       { path: '/dashboard/client/rides', icon: MapPin, label: t('dashboard.rides') },
       { path: '/dashboard/client/wallet', icon: Wallet, label: t('dashboard.wallet') },
     ],
