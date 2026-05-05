@@ -1,8 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-
-// --- Fix default marker icons (common Leaflet + Vite issue) ---
+import { Navigation as NavigationIcon } from 'lucide-react';
 import markerIconPng from 'leaflet/dist/images/marker-icon.png';
 import markerShadowPng from 'leaflet/dist/images/marker-shadow.png';
 
@@ -50,17 +49,73 @@ const createRiderMarker = () =>
     iconAnchor: [16, 16],
   });
 
+// ─── Custom Icon Factories ─────────────────────────────────────────────────────
+const riderIcon = L.divIcon({
+  className: '',
+  iconSize: [40, 40],
+  iconAnchor: [20, 20],
+  html: `
+    <div style="position:relative;width:40px;height:40px;">
+      <div style="
+        position:absolute;inset:0;border-radius:50%;
+        border:2px solid rgba(254,119,67,0.5);
+        animation:leaflet-ping 1.8s ease-out infinite;
+      "></div>
+      <div style="
+        position:absolute;inset:4px;background:#FE7743;border-radius:50%;
+        display:flex;align-items:center;justify-content:center;
+        border:2px solid white;box-shadow:0 4px 12px rgba(254,119,67,0.5);
+        font-size:14px;
+      ">🏍</div>
+    </div>`,
+});
+
+const pickupIcon = L.divIcon({
+  className: '',
+  iconSize: [36, 36],
+  iconAnchor: [18, 36],
+  html: `
+    <div style="display:flex;flex-direction:column;align-items:center;">
+      <div style="
+        width:32px;height:32px;background:#22c55e;border-radius:50%;
+        display:flex;align-items:center;justify-content:center;
+        border:3px solid white;box-shadow:0 4px 16px rgba(34,197,94,0.6);
+        font-size:14px;
+      ">📍</div>
+      <div style="width:2px;height:8px;background:#22c55e;margin-top:1px;"></div>
+    </div>`,
+});
+
+const destIcon = L.divIcon({
+  className: '',
+  iconSize: [36, 36],
+  iconAnchor: [18, 36],
+  html: `
+    <div style="display:flex;flex-direction:column;align-items:center;">
+      <div style="
+        width:32px;height:32px;background:#FE7743;border-radius:50%;
+        display:flex;align-items:center;justify-content:center;
+        border:3px solid white;box-shadow:0 4px 16px rgba(254,119,67,0.6);
+        font-size:14px;
+      ">🏁</div>
+      <div style="width:2px;height:8px;background:#FE7743;margin-top:1px;"></div>
+    </div>`,
+});
+
+// ─── Types ─────────────────────────────────────────────────────────────────────
 interface MapComponentProps {
   pickupCoords?: [number, number]; // [lat, lng]
   destinationCoords?: [number, number];
+  midwayStops?: [number, number][];
   className?: string;
-  onMapClick?: (lat: number, lng: number, type: 'pickup' | 'destination') => void;
-  activeInput?: 'pickup' | 'destination';
+  onMapClick?: (lat: number, lng: number, type: 'pickup' | 'destination' | number) => void;
+  activeInput?: 'pickup' | 'destination' | number;
 }
 
 const MapComponent: React.FC<MapComponentProps> = ({
   pickupCoords,
   destinationCoords,
+  midwayStops,
   className,
   onMapClick,
   activeInput,
@@ -71,12 +126,14 @@ const MapComponent: React.FC<MapComponentProps> = ({
   const destMarkerRef = useRef<L.Marker | null>(null);
   const routeLayerRef = useRef<L.Polyline | null>(null);
   const riderMarkersRef = useRef<L.Marker[]>([]);
+  const userMarkerRef = useRef<L.Marker | null>(null);
+  const midwayMarkersRef = useRef<L.Marker[]>([]);
 
   // --- Initialize Map ---
   useEffect(() => {
     if (mapRef.current || !mapContainer.current) return;
 
-    // Default center: Dar es Salaam
+    // Default center: Dar es Salaam (Fallback)
     mapRef.current = L.map(mapContainer.current, {
       center: [-6.7924, 39.2083],
       zoom: 13,
@@ -92,28 +149,101 @@ const MapComponent: React.FC<MapComponentProps> = ({
     // Custom zoom control position
     L.control.zoom({ position: 'bottomright' }).addTo(mapRef.current);
 
-    // --- Mock nearby riders ---
-    const riderPositions: [number, number][] = [
-      [-6.790, 39.210],
-      [-6.795, 39.200],
-      [-6.800, 39.215],
-      [-6.785, 39.205],
-    ];
+    const updateUserLocationMarker = (lat: number, lng: number) => {
+      if (!mapRef.current) return;
 
-    riderPositions.forEach((pos) => {
-      const m = L.marker(pos, { icon: createRiderMarker() }).addTo(mapRef.current!);
-      riderMarkersRef.current.push(m);
-    });
+      if (userMarkerRef.current) {
+        userMarkerRef.current.setLatLng([lat, lng]);
+      } else {
+        const userIcon = L.divIcon({
+          className: '',
+          html: `
+            <div class="relative flex items-center justify-center">
+              <div class="absolute w-8 h-8 bg-blue-500/30 rounded-full animate-ping"></div>
+              <div class="relative w-4 h-4 bg-blue-600 border-2 border-white rounded-full shadow-lg"></div>
+            </div>`,
+          iconSize: [32, 32],
+          iconAnchor: [16, 16],
+        });
+        userMarkerRef.current = L.marker([lat, lng], { icon: userIcon, zIndexOffset: 1000 })
+          .addTo(mapRef.current)
+          .bindPopup('<b>You are here</b>');
+      }
+    };
+
+    const updateMockRiders = (lat: number, lng: number) => {
+      const riderPositions: [number, number][] = [
+        [lat + 0.002, lng + 0.002],
+        [lat - 0.003, lng - 0.008],
+        [lat + 0.008, lng + 0.007],
+        [lat - 0.007, lng + 0.003],
+      ];
+
+      // Clear existing mock riders
+      riderMarkersRef.current.forEach(m => m.remove());
+      riderMarkersRef.current = [];
+
+      riderPositions.forEach((pos) => {
+        const m = L.marker(pos, { icon: createRiderMarker() }).addTo(mapRef.current!);
+        riderMarkersRef.current.push(m);
+      });
+    };
+
+    // Initially add mock riders for Dar es Salaam
+    updateMockRiders(-6.7924, 39.2083);
+
+    const getAndSetLocation = () => {
+      if (navigator.geolocation) {
+        // First try to get location quickly
+        navigator.geolocation.getCurrentPosition(
+          ({ coords }) => {
+            if (mapRef.current) {
+              const { latitude, longitude } = coords;
+              console.log("Location found:", latitude, longitude);
+              mapRef.current.setView([latitude, longitude], 14);
+              updateUserLocationMarker(latitude, longitude);
+              updateMockRiders(latitude, longitude);
+            }
+          },
+          (err) => {
+            console.warn('Initial geolocation failed, trying again with lower accuracy:', err);
+            // Try again with lower accuracy if high accuracy failed (common on some devices)
+            navigator.geolocation.getCurrentPosition(
+              ({ coords }) => {
+                if (mapRef.current) {
+                  const { latitude, longitude } = coords;
+                  mapRef.current.setView([latitude, longitude], 14);
+                  updateUserLocationMarker(latitude, longitude);
+                  updateMockRiders(latitude, longitude);
+                }
+              },
+              (err2) => console.error('Final geolocation attempt failed:', err2),
+              { enableHighAccuracy: false, timeout: 5000 }
+            );
+          },
+          { 
+            enableHighAccuracy: true, 
+            timeout: 8000, 
+            maximumAge: 0 
+          }
+        );
+
+        // Also watch for changes
+        navigator.geolocation.watchPosition(
+          ({ coords }) => {
+            updateUserLocationMarker(coords.latitude, coords.longitude);
+          },
+          null,
+          { enableHighAccuracy: true }
+        );
+      }
+    };
 
     // --- Geolocation ---
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        ({ coords }) => {
-          mapRef.current?.flyTo([coords.latitude, coords.longitude], 14, { duration: 1.5 });
-        },
-        (err) => console.warn('Geolocation error:', err)
-      );
-    }
+    getAndSetLocation();
+
+    // Store the function for manual triggers if needed (via window or a ref if we had one)
+    // For now, we'll just use it here.
 
     // --- Map Click Handler (for selecting pickup/destination on map) ---
     mapRef.current.on('click', (e) => {
@@ -170,21 +300,49 @@ const MapComponent: React.FC<MapComponentProps> = ({
     drawRoute();
   }, [destinationCoords]);
 
+  // --- Update Midway Markers ---
+  useEffect(() => {
+    if (!mapRef.current) return;
+    
+    // Clear old midway markers
+    midwayMarkersRef.current.forEach(m => m.remove());
+    midwayMarkersRef.current = [];
+
+    midwayStops?.forEach((coords, idx) => {
+      const m = L.marker(coords, { icon: createColoredMarker('#fbbf24') })
+        .addTo(mapRef.current!)
+        .bindPopup(`<b>Stop ${idx + 1}</b>`);
+      midwayMarkersRef.current.push(m);
+    });
+
+    drawRoute();
+  }, [midwayStops]);
+
   // --- Draw Route via OSRM ---
   const drawRoute = async () => {
-    if (!mapRef.current) return;
+    // 1. Always remove existing route layer first
     if (routeLayerRef.current) {
       routeLayerRef.current.remove();
       routeLayerRef.current = null;
     }
-    if (!pickupCoords || !destinationCoords) return;
+
+    if (!mapRef.current || !pickupCoords || !destinationCoords) return;
 
     try {
-      const [pLat, pLng] = pickupCoords;
-      const [dLat, dLng] = destinationCoords;
+      const waypoints = [
+        pickupCoords,
+        ...(midwayStops || []),
+        destinationCoords
+      ];
+
+      console.log("Rerouting with waypoints:", waypoints);
+
+      const coordsString = waypoints
+        .map(([lat, lng]) => `${lng},${lat}`)
+        .join(';');
 
       // OSRM public API – free and no API key needed
-      const url = `https://router.project-osrm.org/route/v1/driving/${pLng},${pLat};${dLng},${dLat}?overview=full&geometries=geojson`;
+      const url = `https://router.project-osrm.org/route/v1/driving/${coordsString}?overview=full&geometries=geojson`;
       const res = await fetch(url);
       const json = await res.json();
 
@@ -255,8 +413,27 @@ const MapComponent: React.FC<MapComponentProps> = ({
           </p>
         </div>
       )}
+
+      {/* Manual Geolocation Trigger */}
+      <button 
+        onClick={() => {
+          if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+              ({ coords }) => {
+                mapRef.current?.flyTo([coords.latitude, coords.longitude], 15);
+              },
+              (err) => alert("Could not get location: " + err.message),
+              { enableHighAccuracy: true }
+            );
+          }
+        }}
+        className="absolute bottom-20 right-4 z-[400] w-10 h-10 bg-white dark:bg-slate-900 rounded-full shadow-xl flex items-center justify-center text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 hover:scale-110 active:scale-95 transition-all"
+        title="Center on my location"
+      >
+        <NavigationIcon size={20} />
+      </button>
     </div>
   );
 };
 
-export default MapComponent;
+          export default MapComponent;

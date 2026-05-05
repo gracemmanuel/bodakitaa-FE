@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   MapPin, Navigation, X, Clock, Shield, 
   Bike, Star, CheckCircle2, CreditCard, ChevronDown,
-  Map as MapIcon, Info, ChevronRight, AlertCircle
+  Map as MapIcon, Info, ChevronRight, AlertCircle, RefreshCcw, Zap
 } from 'lucide-react';
 import gsap from 'gsap';
 
@@ -11,7 +11,7 @@ interface BookRideModalProps {
   onClose: () => void;
 }
 
-type RideType = 'Economy' | 'Deluxe' | 'Express';
+type RideType = 'ride' | 'delivery';
 
 const BookRideModal: React.FC<BookRideModalProps> = ({ isOpen, onClose }) => {
   const modalRef = useRef<HTMLDivElement>(null);
@@ -19,10 +19,14 @@ const BookRideModal: React.FC<BookRideModalProps> = ({ isOpen, onClose }) => {
   const [pickup, setPickup] = useState('');
   const [destination, setDestination] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('Cash');
+  const [vehicleType, setVehicleType] = useState<RideType>('ride');
   const [isConfirming, setIsConfirming] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [estimate, setEstimate] = useState<{ fare: number, distance: number } | null>(null);
   const [createdRide, setCreatedRide] = useState<any>(null);
+  const [pickupCoords, setPickupCoords] = useState<{ lat: number, lng: number }>({ lat: -6.7924, lng: 39.2083 });
+  const [destinationCoords, setDestinationCoords] = useState<{ lat: number, lng: number }>({ lat: -6.8235, lng: 39.2695 });
+  const [isLocating, setIsLocating] = useState(false);
 
   useEffect(() => {
     const fetchEstimate = async () => {
@@ -40,11 +44,11 @@ const BookRideModal: React.FC<BookRideModalProps> = ({ isOpen, onClose }) => {
             }
           `;
           const data = await graphqlClient(estimateMutation, {
-            pickupLat: -6.7924,
-            pickupLng: 39.2083,
-            destinationLat: -6.8235,
-            destinationLng: 39.2695,
-            vehicleType: 'economy'
+            pickupLat: pickupCoords.lat,
+            pickupLng: pickupCoords.lng,
+            destinationLat: destinationCoords.lat,
+            destinationLng: destinationCoords.lng,
+            vehicleType: vehicleType
           });
           setEstimate({ fare: data.estimateRide.estimate.estimatedFareTzs, distance: data.estimateRide.estimate.estimatedDistanceKm });
         } catch (error) {
@@ -91,11 +95,11 @@ const BookRideModal: React.FC<BookRideModalProps> = ({ isOpen, onClose }) => {
       const data = await graphqlClient(requestMutation, {
         pickupAddress: pickup,
         destinationAddress: destination,
-        pickupLat: -6.7924,
-        pickupLng: 39.2083,
-        destinationLat: -6.8235,
-        destinationLng: 39.2695,
-        vehicleType: 'economy'
+        pickupLat: pickupCoords.lat,
+        pickupLng: pickupCoords.lng,
+        destinationLat: destinationCoords.lat,
+        destinationLng: destinationCoords.lng,
+        vehicleType: vehicleType
       });
       setCreatedRide({
         id: data.requestRide.ride.id,
@@ -113,6 +117,37 @@ const BookRideModal: React.FC<BookRideModalProps> = ({ isOpen, onClose }) => {
     } finally {
       setIsConfirming(false);
     }
+  };
+
+  const handleUseCurrentLocation = () => {
+    if (!navigator.geolocation) return;
+    setIsLocating(true);
+    
+    const success = async (pos: GeolocationPosition) => {
+      const { latitude, longitude } = pos.coords;
+      setPickupCoords({ lat: latitude, lng: longitude });
+      
+      try {
+        // Use OSM Nominatim for reverse geocoding (free)
+        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+        const data = await response.json();
+        setPickup(data.display_name || `Lat: ${latitude.toFixed(4)}, Lng: ${longitude.toFixed(4)}`);
+      } catch (err) {
+        setPickup(`My Location (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`);
+      } finally {
+        setIsLocating(false);
+      }
+    };
+
+    const error = () => {
+      alert("Unable to retrieve your location. Please check permissions.");
+      setIsLocating(false);
+    };
+
+    navigator.geolocation.getCurrentPosition(success, error, { 
+      enableHighAccuracy: true,
+      timeout: 10000 
+    });
   };
 
   if (!isOpen && !isSuccess) return null;
@@ -182,10 +217,15 @@ const BookRideModal: React.FC<BookRideModalProps> = ({ isOpen, onClose }) => {
                     value={pickup}
                     onChange={(e) => setPickup(e.target.value)}
                     placeholder="Pickup Location" 
-                    className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-black/40 border-2 border-slate-100 dark:border-white/5 rounded-2xl text-sm font-medium focus:outline-none focus:border-primary-light transition-all text-slate-900 dark:text-white"
+                    className="w-full pl-12 pr-28 py-4 bg-slate-50 dark:bg-black/40 border-2 border-slate-100 dark:border-white/5 rounded-2xl text-sm font-medium focus:outline-none focus:border-primary-light transition-all text-slate-900 dark:text-white"
                   />
-                  <button className="absolute right-4 top-1/2 -translate-y-1/2 text-primary-light text-xs font-bold hover:underline">
-                    Current Location
+                  <button 
+                    onClick={handleUseCurrentLocation}
+                    disabled={isLocating}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-primary-light text-xs font-bold hover:underline flex items-center gap-1"
+                  >
+                    {isLocating ? <RefreshCcw size={14} className="animate-spin" /> : <Navigation size={14} />}
+                    {isLocating ? 'Locating...' : 'Current Location'}
                   </button>
                 </div>
 
@@ -203,6 +243,24 @@ const BookRideModal: React.FC<BookRideModalProps> = ({ isOpen, onClose }) => {
                 </div>
               </div>
 
+
+              {/* Vehicle Type */}
+              <div className="grid grid-cols-2 gap-4">
+                <button 
+                  onClick={() => setVehicleType('ride')}
+                  className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 ${vehicleType === 'ride' ? 'border-primary-light bg-primary-light/5' : 'border-slate-100 dark:border-white/5'}`}
+                >
+                  <Bike size={24} className={vehicleType === 'ride' ? 'text-primary-light' : 'text-slate-400'} />
+                  <span className="text-xs font-black uppercase tracking-widest">Ride</span>
+                </button>
+                <button 
+                  onClick={() => setVehicleType('delivery')}
+                  className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 ${vehicleType === 'delivery' ? 'border-amber-500 bg-amber-500/5' : 'border-slate-100 dark:border-white/5'}`}
+                >
+                  <Zap size={24} className={vehicleType === 'delivery' ? 'text-amber-500' : 'text-slate-400'} />
+                  <span className="text-xs font-black uppercase tracking-widest">Delivery</span>
+                </button>
+              </div>
 
               {/* Payment & Estimates */}
               <div className="bg-slate-50 dark:bg-black/40 rounded-3xl p-5 border border-slate-100 dark:border-white/5 space-y-4">

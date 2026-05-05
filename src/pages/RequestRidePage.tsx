@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   MapPin, Navigation, Clock, Shield, Bike, Star, 
-  CheckCircle2, CreditCard, ArrowRight, Zap, Award, AlertCircle
+  CheckCircle2, CreditCard, ArrowRight, Zap, Award, AlertCircle, RefreshCcw, Plus, X
 } from 'lucide-react';
 import CombinedNav from '../components/CombinedNav';
 import MapComponent from '../components/MapComponent';
@@ -59,9 +59,8 @@ const getOSRMEstimate = async (
 const FARE_RATE: Record<VehicleType, number> = { economy: 700, deluxe: 1200, express: 1800 };
 
 const vehicleOptions: { id: VehicleType; label: string; desc: string; icon: React.ElementType; color: string }[] = [
-  { id: 'economy', label: 'Economy', desc: 'Fast & Affordable', icon: Bike, color: 'text-blue-500' },
-  { id: 'deluxe', label: 'Deluxe', desc: 'Premium New Bikes', icon: Zap, color: 'text-amber-500' },
-  { id: 'express', label: 'Express', desc: 'High-Speed Delivery', icon: Award, color: 'text-primary-light' },
+  { id: 'ride' as any, label: 'Ride', desc: 'Standard Boda Journey', icon: Bike, color: 'text-primary-light' },
+  { id: 'delivery' as any, label: 'Delivery', desc: 'Fast Goods Delivery', icon: Zap, color: 'text-amber-500' },
 ];
 
 const RequestRidePage: React.FC = () => {
@@ -75,7 +74,10 @@ const RequestRidePage: React.FC = () => {
   const [isRequesting, setIsRequesting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeInput, setActiveInput] = useState<'pickup' | 'destination'>('pickup');
+  const [activeInput, setActiveInput] = useState<'pickup' | 'destination' | number>('pickup');
+  const [isLocating, setIsLocating] = useState(false);
+  const [midwayStops, setMidwayStops] = useState<{ id: string; address: string; coords: Coords | null }[]>([]);
+
 
   // Calculate estimate whenever both coords or vehicle type change
   useEffect(() => {
@@ -85,48 +87,96 @@ const RequestRidePage: React.FC = () => {
     }
     const calc = async () => {
       setIsEstimating(true);
-      const osrm = await getOSRMEstimate(pickupCoords.lat, pickupCoords.lng, destCoords.lat, destCoords.lng);
-      if (osrm) {
-        const fare = Math.round(osrm.distanceKm * FARE_RATE[vehicleType]);
-        setEstimate({
-          fare: Math.max(fare, 1500),
-          distance: osrm.distanceKm,
-          time: `${osrm.durationMin} min`,
-        });
-      } else {
-        // Fallback haversine estimate
-        const R = 6371;
-        const dLat = ((destCoords.lat - pickupCoords.lat) * Math.PI) / 180;
-        const dLng = ((destCoords.lng - pickupCoords.lng) * Math.PI) / 180;
-        const a =
-          Math.sin(dLat / 2) ** 2 +
-          Math.cos((pickupCoords.lat * Math.PI) / 180) *
-            Math.cos((destCoords.lat * Math.PI) / 180) *
-            Math.sin(dLng / 2) ** 2;
-        const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        setEstimate({
-          fare: Math.max(Math.round(dist * FARE_RATE[vehicleType]), 1500),
-          distance: dist,
-          time: `${Math.ceil(dist * 3)} min`,
-        });
+      
+      const waypoints = [
+        pickupCoords,
+        ...midwayStops.filter(s => s.coords).map(s => s.coords as Coords),
+        destCoords
+      ];
+
+      const coordsString = waypoints.map(w => `${w.lng},${w.lat}`).join(';');
+      
+      try {
+        const url = `https://router.project-osrm.org/route/v1/driving/${coordsString}?overview=false`;
+        const res = await fetch(url);
+        const json = await res.json();
+        
+        if (json.routes?.length > 0) {
+          const dist = json.routes[0].distance / 1000;
+          const dur = Math.ceil(json.routes[0].duration / 60);
+          const rate = vehicleType === ('delivery' as any) ? 1000 : 700;
+          const fare = Math.max(Math.round(dist * rate), 1500);
+          
+          setEstimate({
+            fare,
+            distance: dist,
+            time: `${dur} min`,
+          });
+        }
+      } catch (err) {
+        console.error("OSRM error", err);
       }
       setIsEstimating(false);
     };
     calc();
-  }, [pickupCoords, destCoords, vehicleType]);
+  }, [pickupCoords, destCoords, midwayStops, vehicleType]);
 
   // Handle map click -> reverse geocode -> fill input
-  const handleMapClick = useCallback(async (lat: number, lng: number, type: 'pickup' | 'destination') => {
+  const handleMapClick = useCallback(async (lat: number, lng: number, type: 'pickup' | 'destination' | number) => {
     const address = await reverseGeocode(lat, lng);
     if (type === 'pickup') {
       setPickup(address);
       setPickupCoords({ lat, lng });
-      setActiveInput('destination');
-    } else {
+      setActiveInput(midwayStops.length > 0 ? 0 : 'destination');
+    } else if (type === 'destination') {
       setDestination(address);
       setDestCoords({ lat, lng });
+    } else if (typeof type === 'number') {
+      const newStops = [...midwayStops];
+      newStops[type] = { ...newStops[type], address, coords: { lat, lng } };
+      setMidwayStops(newStops);
+      setActiveInput(type + 1 < midwayStops.length ? type + 1 : 'destination');
     }
+  }, [midwayStops]);
+
+  const addMidwayStop = () => {
+    const id = Math.random().toString(36).substr(2, 9);
+    setMidwayStops([...midwayStops, { id, address: '', coords: null }]);
+    setActiveInput(midwayStops.length);
+  };
+
+  const removeMidwayStop = (id: string) => {
+    setMidwayStops(midwayStops.filter(s => s.id !== id));
+  };
+
+  const handleUseCurrentLocation = useCallback(() => {
+    if (!navigator.geolocation) return;
+    setIsLocating(true);
+    
+    const success = async (pos: GeolocationPosition) => {
+      const { latitude, longitude } = pos.coords;
+      setPickupCoords({ lat: latitude, lng: longitude });
+      const address = await reverseGeocode(latitude, longitude);
+      setPickup(address);
+      setIsLocating(false);
+      setActiveInput('destination');
+    };
+
+    const error = () => {
+      alert("Unable to retrieve your location. Please check permissions.");
+      setIsLocating(false);
+    };
+
+    navigator.geolocation.getCurrentPosition(success, error, { 
+      enableHighAccuracy: true,
+      timeout: 10000 
+    });
   }, []);
+
+  // Auto-locate on mount
+  useEffect(() => {
+    handleUseCurrentLocation();
+  }, [handleUseCurrentLocation]);
 
   const handleRequestRide = async () => {
     if (!pickup || !destination) return;
@@ -134,8 +184,8 @@ const RequestRidePage: React.FC = () => {
     setError(null);
     try {
       const requestMutation = `
-        mutation($pickupAddress: String!, $destinationAddress: String!, $pickupLat: Float!, $pickupLng: Float!, $destinationLat: Float!, $destinationLng: Float!, $vehicleType: String!) {
-          requestRide(pickupAddress: $pickupAddress, destinationAddress: $destinationAddress, pickupLat: $pickupLat, pickupLng: $pickupLng, destinationLat: $destinationLat, destinationLng: $destinationLng, vehicleType: $vehicleType) {
+        mutation($pickupAddress: String!, $destinationAddress: String!, $pickupLat: Float!, $pickupLng: Float!, $destinationLat: Float!, $destinationLng: Float!, $vehicleType: String!, $midwayStops: String) {
+          requestRide(pickupAddress: $pickupAddress, destinationAddress: $destinationAddress, pickupLat: $pickupLat, pickupLng: $pickupLng, destinationLat: $destinationLat, destinationLng: $destinationLng, vehicleType: $vehicleType, midwayStops: $midwayStops) {
             ride {
               id
               status
@@ -143,6 +193,11 @@ const RequestRidePage: React.FC = () => {
           }
         }
       `;
+      
+      const formattedStops = midwayStops
+        .filter(s => s.coords)
+        .map(s => ({ address: s.address, lat: s.coords!.lat, lng: s.coords!.lng }));
+
       await graphqlClient(requestMutation, {
         pickupAddress: pickup,
         destinationAddress: destination,
@@ -151,6 +206,7 @@ const RequestRidePage: React.FC = () => {
         destinationLat: destCoords?.lat ?? -6.8235,
         destinationLng: destCoords?.lng ?? 39.2695,
         vehicleType,
+        midwayStops: JSON.stringify(formattedStops)
       });
       setIsSuccess(true);
       setTimeout(() => {
@@ -199,9 +255,48 @@ const RequestRidePage: React.FC = () => {
                   onChange={(e) => setPickup(e.target.value)}
                   onFocus={() => setActiveInput('pickup')}
                   placeholder="Pickup location"
-                  className="w-full pl-11 pr-4 py-4 bg-slate-50 dark:bg-black/40 rounded-2xl text-sm font-bold focus:outline-none text-slate-900 dark:text-white"
+                  className="w-full pl-11 pr-28 py-4 bg-slate-50 dark:bg-black/40 rounded-2xl text-sm font-bold focus:outline-none text-slate-900 dark:text-white"
                 />
+                <button
+                  onClick={handleUseCurrentLocation}
+                  disabled={isLocating}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-primary-light uppercase tracking-tighter hover:underline bg-primary-light/10 px-2 py-1.5 rounded-lg flex items-center gap-1"
+                >
+                  {isLocating ? <RefreshCcw size={10} className="animate-spin" /> : <Navigation size={10} />}
+                  {isLocating ? 'Locating...' : 'Current'}
+                </button>
               </div>
+
+              {/* Midway Stops */}
+              {midwayStops.map((stop, idx) => (
+                <div
+                  key={stop.id}
+                  className={`relative rounded-2xl border-2 transition-all ${activeInput === idx ? 'border-amber-500 shadow-lg shadow-amber-500/10' : 'border-slate-100 dark:border-white/5'}`}
+                  onClick={() => setActiveInput(idx)}
+                >
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 rounded-full bg-amber-500/20 flex items-center justify-center text-[10px] font-black text-amber-600">
+                    {idx + 1}
+                  </div>
+                  <input
+                    type="text"
+                    value={stop.address}
+                    onChange={(e) => {
+                      const ns = [...midwayStops];
+                      ns[idx].address = e.target.value;
+                      setMidwayStops(ns);
+                    }}
+                    onFocus={() => setActiveInput(idx)}
+                    placeholder={`Midway Stop ${idx + 1}`}
+                    className="w-full pl-11 pr-10 py-4 bg-slate-50 dark:bg-black/40 rounded-2xl text-sm font-bold focus:outline-none text-slate-900 dark:text-white"
+                  />
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); removeMidwayStop(stop.id); }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-red-500 transition-colors"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              ))}
 
               {/* Destination */}
               <div
@@ -214,10 +309,18 @@ const RequestRidePage: React.FC = () => {
                   value={destination}
                   onChange={(e) => setDestination(e.target.value)}
                   onFocus={() => setActiveInput('destination')}
-                  placeholder="Destination"
+                  placeholder="Final Destination"
                   className="w-full pl-11 pr-4 py-4 bg-slate-50 dark:bg-black/40 rounded-2xl text-sm font-bold focus:outline-none text-slate-900 dark:text-white"
                 />
               </div>
+
+              <button 
+                onClick={addMidwayStop}
+                className="flex items-center gap-2 text-xs font-black text-primary-light uppercase tracking-widest pl-5 hover:gap-3 transition-all"
+              >
+                <Plus size={14} />
+                Add Midway Stop
+              </button>
             </div>
 
             {/* Vehicle Type */}
@@ -348,6 +451,7 @@ const RequestRidePage: React.FC = () => {
           <MapComponent
             pickupCoords={mapPickup}
             destinationCoords={mapDest}
+            midwayStops={midwayStops.filter(s => s.coords).map(s => [s.coords!.lat, s.coords!.lng] as [number, number])}
             onMapClick={handleMapClick}
             activeInput={activeInput}
           />
