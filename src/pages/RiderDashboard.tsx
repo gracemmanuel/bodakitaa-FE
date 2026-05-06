@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 import CombinedNav from '../components/CombinedNav';
 import { getTimeBasedGreeting } from '../utils/greeting';
+import { useQuery } from '@apollo/client/react';
+import { GET_RIDER_STATS } from '../api/queries';
 
 // --- Types ---
 interface EarningData {
@@ -28,16 +30,6 @@ interface IncomingRequest {
 }
 
 // --- Dummy Data ---
-const mockWeeklyEarnings: EarningData[] = [
-  { day: 'Mon', amount: 35000, trips: 12, onlineHours: 6.5 },
-  { day: 'Tue', amount: 42000, trips: 15, onlineHours: 8.0 },
-  { day: 'Wed', amount: 28000, trips: 10, onlineHours: 5.5 },
-  { day: 'Thu', amount: 55000, trips: 18, onlineHours: 9.5 },
-  { day: 'Fri', amount: 65000, trips: 22, onlineHours: 10.0 },
-  { day: 'Sat', amount: 75000, trips: 25, onlineHours: 11.0 },
-  { day: 'Sun', amount: 45000, trips: 14, onlineHours: 7.0 },
-];
-
 const mockIncoming: IncomingRequest = {
   id: 'REQ-8892',
   pickup: 'Makumbusho Village',
@@ -48,8 +40,6 @@ const mockIncoming: IncomingRequest = {
   clientRating: 4.8,
   timeRemaining: 15,
 };
-
-// --- Sub-Components ---
 
 const StatCard: React.FC<{ title: string; value: string | number; icon: React.ElementType; color: string; subtitle?: string; trend?: { value: number; isUp: boolean } }> = ({ title, value, icon: Icon, color, subtitle, trend }) => (
   <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl p-6 relative overflow-hidden group hover:shadow-2xl transition-all duration-500">
@@ -181,8 +171,8 @@ const IncomingRequestOverlay: React.FC = () => (
   </div>
 );
 
-const EarningsChart: React.FC = () => {
-  const maxAmount = Math.max(...mockWeeklyEarnings.map(d => d.amount));
+const EarningsChart: React.FC<{ earnings: EarningData[], total: number }> = ({ earnings, total }) => {
+  const maxAmount = Math.max(...earnings.map(d => d.amount), 1);
 
   return (
     <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl p-8 h-full flex flex-col">
@@ -192,13 +182,13 @@ const EarningsChart: React.FC = () => {
           <p className="text-sm text-slate-500 dark:text-slate-400">Your income for the past 7 days</p>
         </div>
         <div className="text-right">
-          <p className="text-3xl font-black text-green-500">TZS 345,000</p>
+          <p className="text-3xl font-black text-green-500">TZS {total.toLocaleString()}</p>
           <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-1">Total this week</p>
         </div>
       </div>
 
       <div className="flex-1 flex items-end gap-2 sm:gap-4 mt-auto">
-        {mockWeeklyEarnings.map((data, i) => {
+        {earnings.map((data, i) => {
           const heightPercent = (data.amount / maxAmount) * 100;
           return (
             <div key={i} className="flex-1 flex flex-col justify-end items-center gap-2 relative group h-[250px]">
@@ -214,7 +204,7 @@ const EarningsChart: React.FC = () => {
                 </div>
               </div>
 
-              <span className={`text-xs font-bold mt-2 block w-full text-center ${i === mockWeeklyEarnings.length - 1 ? 'text-primary-light' : 'text-slate-400 dark:text-slate-500'}`}>
+              <span className={`text-xs font-bold mt-2 block w-full text-center ${i === earnings.length - 1 ? 'text-primary-light' : 'text-slate-400 dark:text-slate-500'}`}>
                 {data.day}
               </span>
             </div>
@@ -237,6 +227,19 @@ const RiderDashboard: React.FC = () => {
     setUser(storedUser);
   }, []);
 
+  const { data: statsData, loading: statsLoading } = useQuery<any>(GET_RIDER_STATS, { fetchPolicy: 'network-only' });
+  const stats = statsData?.riderStats;
+
+  const todayEarnings = stats?.todayEarnings || 0;
+  const tripsCompleted = stats?.tripsCompleted || 0;
+  const onlineTime = stats?.onlineTime || '0h 0m';
+  const rating = stats?.rating || 0.0;
+  const targetAmount = stats?.targetAmount || 30000;
+  const targetCompleted = stats?.targetCompletedAmount || 0;
+  const targetPercent = Math.min(100, Math.round((targetCompleted / targetAmount) * 100)) || 0;
+  const weeklyEarnings = stats?.weeklyEarnings || [];
+  const totalWeekly = weeklyEarnings.reduce((acc: number, curr: any) => acc + curr.amount, 0);
+
   return (
     <CombinedNav role="rider">
       <div className="max-w-7xl mx-auto space-y-8 w-full relative">
@@ -255,7 +258,7 @@ const RiderDashboard: React.FC = () => {
               {getTimeBasedGreeting()}, <span className="text-primary-light">{user?.fullName || user?.full_name || 'Rider'}</span>
             </h1>
             <p className="text-slate-600 dark:text-slate-400 mt-2 font-medium">
-              You are assigned to <span className="font-bold">TVS HLX 150 (MC 123 ABC)</span> under fleet owner <b>Baraka M.</b>
+              You are assigned to <span className="font-bold">{user?.plateNumber || 'TVS HLX 150'}</span> under fleet owner <b>{user?.companyName || 'BodaKitaa'}</b>
             </p>
           </div>
           <div className="bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 px-4 py-2 rounded-xl flex items-center gap-2 font-bold text-sm">
@@ -265,10 +268,10 @@ const RiderDashboard: React.FC = () => {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard title="Today's Earnings" value="TZS 45,200" icon={Wallet} color="text-green-500" trend={{ value: 12, isUp: true }} subtitle="Target: TZS 50,000" />
-          <StatCard title="Trips Completed" value="14" icon={Navigation} color="text-blue-500" />
-          <StatCard title="Online Time" value="6h 30m" icon={Clock} color="text-primary-light" />
-          <StatCard title="Rating" value="4.9" icon={Star} color="text-amber-500" trend={{ value: 0.1, isUp: true }} subtitle="Based on 450 trips" />
+          <StatCard title="Today's Earnings" value={`TZS ${todayEarnings.toLocaleString()}`} icon={Wallet} color="text-green-500" trend={{ value: 12, isUp: true }} subtitle={`Target: TZS ${targetAmount.toLocaleString()}`} />
+          <StatCard title="Trips Completed" value={tripsCompleted} icon={Navigation} color="text-blue-500" />
+          <StatCard title="Online Time" value={onlineTime} icon={Clock} color="text-primary-light" />
+          <StatCard title="Rating" value={rating.toFixed(1)} icon={Star} color="text-amber-500" subtitle={`Based on ${user?.total_trips || tripsCompleted} trips`} />
         </div>
 
         {/* Main Content Grid */}
@@ -289,21 +292,21 @@ const RiderDashboard: React.FC = () => {
               </div>
 
               <div className="flex justify-between items-end mb-2">
-                <p className="text-2xl font-black text-slate-900 dark:text-white">TZS 25,000</p>
-                <p className="text-sm font-bold text-slate-400">/ TZS 30,000</p>
+                <p className="text-2xl font-black text-slate-900 dark:text-white">TZS {targetCompleted.toLocaleString()}</p>
+                <p className="text-sm font-bold text-slate-400">/ TZS {targetAmount.toLocaleString()}</p>
               </div>
               <div className="w-full h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden mb-2 shadow-inner">
-                <div className="h-full bg-gradient-to-r from-primary-dark to-primary-light w-[83%] rounded-full relative">
+                <div className="h-full bg-gradient-to-r from-primary-dark to-primary-light rounded-full relative transition-all duration-1000" style={{ width: `${targetPercent}%` }}>
                   <div className="absolute top-0 right-0 bottom-0 w-4 bg-white/30 animate-pulse" />
                 </div>
               </div>
-              <p className="text-xs font-bold text-primary-light text-right">83% completed</p>
+              <p className="text-xs font-bold text-primary-light text-right">{targetPercent}% completed</p>
             </div>
           </div>
 
           <div className="xl:col-span-2">
             <div className="h-[300px] md:h-[500px]">
-              <EarningsChart />
+              <EarningsChart earnings={weeklyEarnings} total={totalWeekly} />
             </div>
           </div>
         </div>

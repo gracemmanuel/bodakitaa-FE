@@ -60,6 +60,25 @@ export const GET_RIDE_HISTORY = gql`
           plateNumber
         }
       }
+      }
+    }
+`;
+
+export const GET_RIDER_STATS = gql`
+  query GetRiderStats {
+    riderStats {
+      todayEarnings
+      tripsCompleted
+      onlineTime
+      rating
+      targetAmount
+      targetCompletedAmount
+      weeklyEarnings {
+        day
+        amount
+        trips
+        onlineHours
+      }
     }
   }
 `;

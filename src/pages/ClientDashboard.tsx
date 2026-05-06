@@ -143,6 +143,8 @@ const RideHistoryTable: React.FC<{ clientId?: string }> = () => {
               destinationAddress
               status
               baseFare
+              totalFare
+              finalFare
               requestedAt
               rider {
                 fullName
@@ -255,7 +257,7 @@ const RideHistoryTable: React.FC<{ clientId?: string }> = () => {
                     <div className="text-xs mt-1 text-slate-400">{new Date(ride.requestedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-sm font-black text-slate-900 dark:text-white">TZS {parseFloat(ride.baseFare).toLocaleString()}</p>
+                    <p className="text-sm font-black text-slate-900 dark:text-white">TZS {parseFloat(ride.finalFare || ride.totalFare || ride.baseFare || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                     <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider mt-1 ${ride.status === 'completed' ? 'bg-green-500/20 text-green-600 dark:text-green-400' : ride.status === 'cancelled' ? 'bg-red-500/20 text-red-600 dark:text-red-400' : 'bg-amber-500/20 text-amber-500'}`}>
                       {ride.status === 'completed' && <CheckCircle2 size={10} />}
                       {ride.status === 'cancelled' && <AlertCircle size={10} />}
