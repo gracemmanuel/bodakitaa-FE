@@ -6,8 +6,8 @@ import {
   PhoneCall, Smartphone, RefreshCcw, User, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { useQuery } from '@apollo/client/react';
+import { useNavigate } from 'react-router-dom';
 import CombinedNav from '../components/CombinedNav';
-import BookRideModal from '../components/BookRideModal';
 import MapComponent from '../components/MapComponent';
 import { GET_RIDE_HISTORY, GET_CLIENT_STATS, GET_ME } from '../api/queries';
 // --- Types ---
@@ -27,7 +27,7 @@ interface RideHistory {
 
 interface PaymentMethod {
   id: string;
-  type: 'Visa' | 'Mastercard' | 'Mobile Money';
+  type: 'Cash' | 'Visa' | 'Mastercard' | 'Mobile Money';
   provider?: string;
   last4?: string;
   isDefault: boolean;
@@ -44,9 +44,7 @@ interface UserStats {
 // --- Mock Data (Kept only for missing API models like Wallet) ---
 
 const mockPaymentMethods: PaymentMethod[] = [
-  { id: 'pm_1', type: 'Mobile Money', provider: 'M-Pesa', isDefault: true },
-  { id: 'pm_2', type: 'Visa', last4: '4242', isDefault: false },
-  { id: 'pm_3', type: 'Mobile Money', provider: 'Tigo Pesa', isDefault: false },
+  { id: 'pm_1', type: 'Cash', provider: 'Cash Only', isDefault: true },
 ];
 
 // --- Sub-Components ---
@@ -128,22 +126,52 @@ const ActiveRideCard: React.FC<{ ride: any }> = ({ ride }) => (
 const RideHistoryTable: React.FC<{ clientId?: string }> = () => {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const [rides, setRides] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const PAGE_SIZE = 5;
 
-  const { data, loading, error } = useQuery<any>(GET_RIDE_HISTORY, {
-    variables: { page, pageSize: PAGE_SIZE },
-  });
-
-  const rides = data?.rideHistory?.rides ?? [];
-  const total = data?.rideHistory?.total ?? 0;
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  React.useEffect(() => {
+    const fetchRides = async () => {
+      try {
+        const { graphqlClient } = await import('../api/index');
+        const query = `
+          query {
+            myRides {
+              id
+              pickupAddress
+              destinationAddress
+              status
+              baseFare
+              requestedAt
+              rider {
+                fullName
+              }
+            }
+          }
+        `;
+        const data = await graphqlClient(query);
+        setRides(data.myRides || []);
+      } catch (err) {
+        console.error("Failed to load rides:", err);
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchRides();
+  }, []);
 
   const filtered = search
     ? rides.filter((r: any) =>
-      r.pickup.toLowerCase().includes(search.toLowerCase()) ||
-      r.destination.toLowerCase().includes(search.toLowerCase())
+      r.pickupAddress.toLowerCase().includes(search.toLowerCase()) ||
+      r.destinationAddress.toLowerCase().includes(search.toLowerCase())
     )
     : rides;
+
+  const total = filtered.length;
+  const currentRides = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl overflow-hidden flex flex-col h-[500px] md:h-[600px]">
@@ -195,7 +223,7 @@ const RideHistoryTable: React.FC<{ clientId?: string }> = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-white/5">
-              {filtered.map((ride: any) => (
+              {currentRides.map((ride: any) => (
                 <tr key={ride.id} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-start gap-4">
@@ -203,8 +231,8 @@ const RideHistoryTable: React.FC<{ clientId?: string }> = () => {
                         <MapIcon size={20} />
                       </div>
                       <div>
-                        <p className="font-bold text-slate-900 dark:text-white text-sm line-clamp-1">{ride.destination}</p>
-                        <p className="text-xs text-slate-500 mt-1">from {ride.pickup}</p>
+                        <p className="font-bold text-slate-900 dark:text-white text-sm line-clamp-1">{ride.destinationAddress}</p>
+                        <p className="text-xs text-slate-500 mt-1">from {ride.pickupAddress}</p>
                         <p className="text-[10px] font-mono text-slate-400 mt-1">#{ride.id}</p>
                       </div>
                     </div>
@@ -216,23 +244,23 @@ const RideHistoryTable: React.FC<{ clientId?: string }> = () => {
                         <div>
                           <p className="text-sm font-bold text-slate-900 dark:text-white">{ride.rider.fullName}</p>
                           <div className="flex items-center gap-1 text-[10px] font-bold text-amber-500">
-                            <Star size={10} className="fill-current" /> {Number(ride.rider.rating).toFixed(1)}
+                            <Star size={10} className="fill-current" /> 4.8
                           </div>
                         </div>
                       </div>
                     ) : <span className="text-xs text-slate-400">—</span>}
                   </td>
                   <td className="px-6 py-4 hidden lg:table-cell text-sm text-slate-600 dark:text-slate-400">
-                    <div className="flex items-center gap-2"><Calendar size={14} /> {ride.date}</div>
-                    <div className="text-xs mt-1 text-slate-400">{ride.duration}</div>
+                    <div className="flex items-center gap-2"><Calendar size={14} /> {new Date(ride.requestedAt).toLocaleDateString()}</div>
+                    <div className="text-xs mt-1 text-slate-400">{new Date(ride.requestedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-sm font-black text-slate-900 dark:text-white">TZS {ride.amount}</p>
+                    <p className="text-sm font-black text-slate-900 dark:text-white">TZS {parseFloat(ride.baseFare).toLocaleString()}</p>
                     <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider mt-1 ${ride.status === 'completed' ? 'bg-green-500/20 text-green-600 dark:text-green-400' : ride.status === 'cancelled' ? 'bg-red-500/20 text-red-600 dark:text-red-400' : 'bg-amber-500/20 text-amber-500'}`}>
                       {ride.status === 'completed' && <CheckCircle2 size={10} />}
                       {ride.status === 'cancelled' && <AlertCircle size={10} />}
                       {ride.status === 'in_progress' && <Activity size={10} />}
-                      {ride.status}
+                      {ride.status.replace('_', ' ')}
                     </div>
                   </td>
                   <td className="px-6 py-4 text-right">
@@ -251,11 +279,9 @@ const RideHistoryTable: React.FC<{ clientId?: string }> = () => {
       <div className="p-4 border-t border-slate-200 dark:border-white/10 flex justify-between items-center bg-slate-50 dark:bg-transparent">
         <p className="text-xs font-bold text-slate-500">Showing {filtered.length} of {total} rides</p>
         <div className="flex gap-1">
-          <button className="w-8 h-8 rounded border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-400 cursor-not-allowed"><ChevronLeft size={16} /></button>
-          <button className="w-8 h-8 rounded bg-primary-light text-white font-bold flex items-center justify-center">1</button>
-          <button className="w-8 h-8 rounded border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 flex items-center justify-center font-bold">2</button>
-          <button className="w-8 h-8 rounded border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 flex items-center justify-center font-bold">3</button>
-          <button className="w-8 h-8 rounded border border-slate-200 dark:border-white/10 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-white/5"><ChevronRight size={16} /></button>
+          <button onClick={() => setPage(Math.max(1, page - 1))} className="w-8 h-8 rounded border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5"><ChevronLeft size={16} /></button>
+          <button className="w-8 h-8 rounded bg-primary-light text-white font-bold flex items-center justify-center">{page}</button>
+          <button onClick={() => setPage(Math.min(totalPages, page + 1))} className="w-8 h-8 rounded border border-slate-200 dark:border-white/10 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-white/5"><ChevronRight size={16} /></button>
         </div>
       </div>
     </div>
@@ -290,19 +316,16 @@ const WalletSection: React.FC<{ totalSpent: number; loading: boolean }> = ({ tot
           <div key={pm.id} className="flex items-center justify-between p-3 rounded-xl bg-black/40 border border-white/5">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center">
-                {pm.type === 'Visa' ? <CreditCard size={18} className="text-blue-400" /> : <Smartphone size={18} className="text-green-400" />}
+                <CreditCard size={18} className="text-green-400" />
               </div>
               <div>
                 <p className="font-bold text-sm">{pm.provider || pm.type}</p>
-                {pm.last4 && <p className="text-xs text-slate-400">•••• {pm.last4}</p>}
+                <p className="text-xs text-slate-400">Pay directly to driver</p>
               </div>
             </div>
             {pm.isDefault && <span className="bg-primary-light/20 text-primary-light text-[10px] font-black uppercase px-2 py-1 rounded">Default</span>}
           </div>
         ))}
-        <button className="w-full py-3 rounded-xl border border-dashed border-white/20 text-sm font-bold text-slate-300 hover:bg-white/5 transition-colors flex items-center justify-center gap-2">
-          + Add New Method
-        </button>
       </div>
     </div>
   </div>
@@ -310,12 +333,20 @@ const WalletSection: React.FC<{ totalSpent: number; loading: boolean }> = ({ tot
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 const ClientDashboard: React.FC = () => {
-  const [isBookingOpen, setIsBookingOpen] = React.useState(false);
+  const navigate = useNavigate();
   const { data: statsData, loading: statsLoading } = useQuery<any>(GET_CLIENT_STATS);
-  const { data: meData, loading: meLoading } = useQuery<any>(GET_ME);
   const stats = statsData?.clientStats;
   const activeRide = stats?.activeRide;
-  const me = meData?.me;
+
+  const [userName, setUserName] = React.useState('Client');
+  React.useEffect(() => {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    if (user.fullName) {
+      setUserName(user.fullName);
+    } else if (user.full_name) {
+      setUserName(user.full_name);
+    }
+  }, []);
 
   const currentHour = new Date().getHours();
   let greeting = 'Good evening';
@@ -325,26 +356,24 @@ const ClientDashboard: React.FC = () => {
     greeting = 'Good afternoon';
   }
 
-  const userName = me?.fullName || 'Client';
   const totalRides = stats?.totalRides || 0;
 
   return (
     <CombinedNav role="client">
-      <BookRideModal isOpen={isBookingOpen} onClose={() => setIsBookingOpen(false)} />
       <div className="max-w-7xl mx-auto space-y-8 w-full">
 
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
           <div>
             <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
-              {greeting}, <span className="text-primary-light">{meLoading ? '...' : userName}</span>
+              {greeting}, <span className="text-primary-light">{userName}</span>
             </h1>
             <p className="text-slate-600 dark:text-slate-400 mt-2 font-medium">
               You have taken {statsLoading ? '...' : totalRides} rides with us. Thank you for choosing BodaKitaa!
             </p>
           </div>
           <button
-            onClick={() => setIsBookingOpen(true)}
+            onClick={() => navigate('/dashboard/client/request')}
             className="premium-btn bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xl flex items-center gap-2 hover:scale-105 transition-transform active:scale-95"
           >
             <NavigationIcon size={18} /> Book a Ride Now

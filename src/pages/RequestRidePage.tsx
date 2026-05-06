@@ -8,7 +8,7 @@ import MapComponent from '../components/MapComponent';
 import { graphqlClient } from '../api';
 
 // --- Types ---
-type VehicleType = 'economy' | 'deluxe' | 'express';
+type RideType = 'ride' | 'delivery';
 
 interface RideEstimate {
   fare: number;
@@ -56,11 +56,11 @@ const getOSRMEstimate = async (
   }
 };
 
-const FARE_RATE: Record<VehicleType, number> = { economy: 700, deluxe: 1200, express: 1800 };
+const FARE_RATE: Record<string, number> = { ride: 700, delivery: 1000 };
 
-const vehicleOptions: { id: VehicleType; label: string; desc: string; icon: React.ElementType; color: string }[] = [
-  { id: 'ride' as any, label: 'Ride', desc: 'Standard Boda Journey', icon: Bike, color: 'text-primary-light' },
-  { id: 'delivery' as any, label: 'Delivery', desc: 'Fast Goods Delivery', icon: Zap, color: 'text-amber-500' },
+const rideOptions: { id: RideType; label: string; desc: string; icon: React.ElementType; color: string }[] = [
+  { id: 'ride', label: 'Ride', desc: 'Standard Boda Journey', icon: Bike, color: 'text-primary-light' },
+  { id: 'delivery', label: 'Delivery', desc: 'Fast Goods Delivery', icon: Zap, color: 'text-amber-500' },
 ];
 
 const RequestRidePage: React.FC = () => {
@@ -68,7 +68,7 @@ const RequestRidePage: React.FC = () => {
   const [destination, setDestination] = useState('');
   const [pickupCoords, setPickupCoords] = useState<Coords | null>(null);
   const [destCoords, setDestCoords] = useState<Coords | null>(null);
-  const [vehicleType, setVehicleType] = useState<VehicleType>('economy');
+  const [rideType, setRideType] = useState<RideType>('ride');
   const [estimate, setEstimate] = useState<RideEstimate | null>(null);
   const [isEstimating, setIsEstimating] = useState(false);
   const [isRequesting, setIsRequesting] = useState(false);
@@ -104,7 +104,7 @@ const RequestRidePage: React.FC = () => {
         if (json.routes?.length > 0) {
           const dist = json.routes[0].distance / 1000;
           const dur = Math.ceil(json.routes[0].duration / 60);
-          const rate = vehicleType === ('delivery' as any) ? 1000 : 700;
+          const rate = rideType === 'delivery' ? 1000 : 700;
           const fare = Math.max(Math.round(dist * rate), 1500);
           
           setEstimate({
@@ -119,7 +119,7 @@ const RequestRidePage: React.FC = () => {
       setIsEstimating(false);
     };
     calc();
-  }, [pickupCoords, destCoords, midwayStops, vehicleType]);
+  }, [pickupCoords, destCoords, midwayStops, rideType]);
 
   // Handle map click -> reverse geocode -> fill input
   const handleMapClick = useCallback(async (lat: number, lng: number, type: 'pickup' | 'destination' | number) => {
@@ -184,8 +184,8 @@ const RequestRidePage: React.FC = () => {
     setError(null);
     try {
       const requestMutation = `
-        mutation($pickupAddress: String!, $destinationAddress: String!, $pickupLat: Float!, $pickupLng: Float!, $destinationLat: Float!, $destinationLng: Float!, $vehicleType: String!, $midwayStops: String) {
-          requestRide(pickupAddress: $pickupAddress, destinationAddress: $destinationAddress, pickupLat: $pickupLat, pickupLng: $pickupLng, destinationLat: $destinationLat, destinationLng: $destinationLng, vehicleType: $vehicleType, midwayStops: $midwayStops) {
+        mutation($pickupAddress: String!, $destinationAddress: String!, $pickupLat: Float!, $pickupLng: Float!, $destinationLat: Float!, $destinationLng: Float!, $rideType: String!, $midwayStops: String) {
+          requestRide(pickupAddress: $pickupAddress, destinationAddress: $destinationAddress, pickupLat: $pickupLat, pickupLng: $pickupLng, destinationLat: $destinationLat, destinationLng: $destinationLng, rideType: $rideType, midwayStops: $midwayStops) {
             ride {
               id
               status
@@ -205,7 +205,7 @@ const RequestRidePage: React.FC = () => {
         pickupLng: pickupCoords?.lng ?? 39.2083,
         destinationLat: destCoords?.lat ?? -6.8235,
         destinationLng: destCoords?.lng ?? 39.2695,
-        vehicleType,
+        rideType,
         midwayStops: JSON.stringify(formattedStops)
       });
       setIsSuccess(true);
@@ -325,23 +325,23 @@ const RequestRidePage: React.FC = () => {
 
             {/* Vehicle Type */}
             <div className="space-y-2">
-              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Select Ride Type</h3>
+              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Do you want a Ride or Delivery?</h3>
               <div className="space-y-2">
-                {vehicleOptions.map((v) => {
+                {rideOptions.map((v) => {
                   const fareForType = estimate
                     ? Math.max(Math.round(estimate.distance * FARE_RATE[v.id]), 1500)
                     : null;
                   return (
                     <button
                       key={v.id}
-                      onClick={() => setVehicleType(v.id)}
+                      onClick={() => setRideType(v.id)}
                       className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-left ${
-                        vehicleType === v.id
+                        rideType === v.id
                           ? 'border-primary-light bg-primary-light/5 shadow-lg shadow-primary-light/5'
                           : 'border-slate-100 dark:border-white/5 hover:border-slate-200 dark:hover:border-white/10'
                       }`}
                     >
-                      <div className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all ${vehicleType === v.id ? 'bg-primary-light text-white' : `bg-slate-100 dark:bg-white/5 ${v.color}`}`}>
+                      <div className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all ${rideType === v.id ? 'bg-primary-light text-white' : `bg-slate-100 dark:bg-white/5 ${v.color}`}`}>
                         <v.icon size={22} />
                       </div>
                       <div className="flex-1">
@@ -353,7 +353,7 @@ const RequestRidePage: React.FC = () => {
                           <div className="w-16 h-4 bg-slate-100 dark:bg-white/10 rounded animate-pulse" />
                         ) : fareForType ? (
                           <>
-                            <p className={`font-black text-sm ${vehicleType === v.id ? 'text-primary-light' : 'text-slate-700 dark:text-slate-300'}`}>
+                            <p className={`font-black text-sm ${rideType === v.id ? 'text-primary-light' : 'text-slate-700 dark:text-slate-300'}`}>
                               TZS {fareForType.toLocaleString()}
                             </p>
                             <p className="text-[10px] text-slate-400 font-bold">{estimate?.time}</p>
@@ -431,7 +431,7 @@ const RequestRidePage: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    <span>Request {vehicleType.charAt(0).toUpperCase() + vehicleType.slice(1)}</span>
+                    <span>Request {rideType.charAt(0).toUpperCase() + rideType.slice(1)}</span>
                     <ArrowRight size={20} className="relative z-10 group-hover:translate-x-1 transition-transform" />
                   </>
                 )}

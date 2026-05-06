@@ -10,15 +10,13 @@ import { graphqlClient } from '../api';
 // --- Types ---
 interface Ride {
   id: string;
-  pickup_address: string;
-  destination_address: string;
+  pickupAddress: string;
+  destinationAddress: string;
   status: string;
-  base_fare: string;
-  created_at: string;
-  driver?: {
-    user: {
-      fullName: string;
-    }
+  baseFare: string;
+  requestedAt: string;
+  rider?: {
+    fullName: string;
   }
 }
 
@@ -35,15 +33,13 @@ const ClientRidesPage: React.FC = () => {
           query {
             myRides {
               id
-              pickup_address
-              destination_address
+              pickupAddress
+              destinationAddress
               status
-              base_fare
-              created_at
-              driver {
-                user {
-                  fullName
-                }
+              baseFare
+              requestedAt
+              rider {
+                fullName
               }
             }
           }
@@ -134,26 +130,26 @@ const ClientRidesPage: React.FC = () => {
                         <div className="space-y-3">
                           <div className="flex items-center gap-3">
                             <div className="w-2 h-2 rounded-full bg-green-500" />
-                            <p className="text-sm font-bold text-slate-900 dark:text-white line-clamp-1">{ride.pickup_address}</p>
+                            <p className="text-sm font-bold text-slate-900 dark:text-white line-clamp-1">{ride.pickupAddress}</p>
                           </div>
                           <div className="flex items-center gap-3">
                             <div className="w-2 h-2 rounded-full bg-primary-light" />
-                            <p className="text-sm font-bold text-slate-900 dark:text-white line-clamp-1">{ride.destination_address}</p>
+                            <p className="text-sm font-bold text-slate-900 dark:text-white line-clamp-1">{ride.destinationAddress}</p>
                           </div>
                           <div className="flex items-center gap-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-5">
-                            <span className="flex items-center gap-1"><Calendar size={12} /> {new Date(ride.created_at).toLocaleDateString()}</span>
-                            <span className="flex items-center gap-1"><Clock size={12} /> {new Date(ride.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                            <span className="flex items-center gap-1"><Calendar size={12} /> {new Date(ride.requestedAt).toLocaleDateString()}</span>
+                            <span className="flex items-center gap-1"><Clock size={12} /> {new Date(ride.requestedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                           </div>
                         </div>
                       </td>
                       <td className="px-8 py-6">
-                        {ride.driver ? (
+                        {ride.rider ? (
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-full bg-primary-light/10 text-primary-light flex items-center justify-center font-bold text-xs border border-primary-light/20">
-                              {ride.driver.user.fullName.charAt(0)}
+                              {ride.rider.fullName.charAt(0)}
                             </div>
                             <div>
-                              <p className="text-sm font-bold text-slate-900 dark:text-white">{ride.driver.user.fullName}</p>
+                              <p className="text-sm font-bold text-slate-900 dark:text-white">{ride.rider.fullName}</p>
                               <div className="flex items-center gap-1 text-[10px] text-amber-500">
                                 <Star size={10} className="fill-current" />
                                 <span className="font-bold">4.8</span>
@@ -165,7 +161,7 @@ const ClientRidesPage: React.FC = () => {
                         )}
                       </td>
                       <td className="px-8 py-6">
-                        <p className="text-sm font-black text-slate-900 dark:text-white">TZS {parseFloat(ride.base_fare).toLocaleString()}</p>
+                        <p className="text-sm font-black text-slate-900 dark:text-white">TZS {parseFloat(ride.baseFare).toLocaleString()}</p>
                         <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">Cash Payment</p>
                       </td>
                       <td className="px-8 py-6">

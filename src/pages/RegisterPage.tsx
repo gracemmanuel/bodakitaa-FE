@@ -228,6 +228,23 @@ const RegisterPage: React.FC = () => {
     setError(null);
 
     if (step < 2 || (step === 2 && formData.role !== 'client')) {
+      if (step === 2) {
+        setIsLoading(true);
+        try {
+          const checkQuery = `query($email: String!) { checkEmail(email: $email) }`;
+          const data = await graphqlClient(checkQuery, { email: formData.email });
+          if (data.checkEmail) {
+            setError("Email is already registered. Please login or use a different email.");
+            setIsLoading(false);
+            return;
+          }
+        } catch (err: any) {
+          setError(err.message || "Failed to verify email");
+          setIsLoading(false);
+          return;
+        }
+        setIsLoading(false);
+      }
       handleNextStep();
       return;
     }

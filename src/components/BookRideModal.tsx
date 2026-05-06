@@ -19,7 +19,7 @@ const BookRideModal: React.FC<BookRideModalProps> = ({ isOpen, onClose }) => {
   const [pickup, setPickup] = useState('');
   const [destination, setDestination] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('Cash');
-  const [vehicleType, setVehicleType] = useState<RideType>('ride');
+  const [rideType, setRideType] = useState<RideType>('ride');
   const [isConfirming, setIsConfirming] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [estimate, setEstimate] = useState<{ fare: number, distance: number } | null>(null);
@@ -34,8 +34,8 @@ const BookRideModal: React.FC<BookRideModalProps> = ({ isOpen, onClose }) => {
         try {
           const { graphqlClient } = await import('../api/index');
           const estimateMutation = `
-            mutation($pickupLat: Float!, $pickupLng: Float!, $destinationLat: Float!, $destinationLng: Float!, $vehicleType: String!) {
-              estimateRide(pickupLat: $pickupLat, pickupLng: $pickupLng, destinationLat: $destinationLat, destinationLng: $destinationLng, vehicleType: $vehicleType) {
+            mutation($pickupLat: Float!, $pickupLng: Float!, $destinationLat: Float!, $destinationLng: Float!, $rideType: String!) {
+              estimateRide(pickupLat: $pickupLat, pickupLng: $pickupLng, destinationLat: $destinationLat, destinationLng: $destinationLng, rideType: $rideType) {
                 estimate {
                   estimatedDistanceKm
                   estimatedFareTzs
@@ -48,7 +48,7 @@ const BookRideModal: React.FC<BookRideModalProps> = ({ isOpen, onClose }) => {
             pickupLng: pickupCoords.lng,
             destinationLat: destinationCoords.lat,
             destinationLng: destinationCoords.lng,
-            vehicleType: vehicleType
+            rideType: rideType
           });
           setEstimate({ fare: data.estimateRide.estimate.estimatedFareTzs, distance: data.estimateRide.estimate.estimatedDistanceKm });
         } catch (error) {
@@ -82,8 +82,8 @@ const BookRideModal: React.FC<BookRideModalProps> = ({ isOpen, onClose }) => {
     try {
       const { graphqlClient } = await import('../api/index');
       const requestMutation = `
-        mutation($pickupAddress: String!, $destinationAddress: String!, $pickupLat: Float!, $pickupLng: Float!, $destinationLat: Float!, $destinationLng: Float!, $vehicleType: String!) {
-          requestRide(pickupAddress: $pickupAddress, destinationAddress: $destinationAddress, pickupLat: $pickupLat, pickupLng: $pickupLng, destinationLat: $destinationLat, destinationLng: $destinationLng, vehicleType: $vehicleType) {
+        mutation($pickupAddress: String!, $destinationAddress: String!, $pickupLat: Float!, $pickupLng: Float!, $destinationLat: Float!, $destinationLng: Float!, $rideType: String!) {
+          requestRide(pickupAddress: $pickupAddress, destinationAddress: $destinationAddress, pickupLat: $pickupLat, pickupLng: $pickupLng, destinationLat: $destinationLat, destinationLng: $destinationLng, rideType: $rideType) {
             ride {
               id
               pickupAddress
@@ -99,7 +99,7 @@ const BookRideModal: React.FC<BookRideModalProps> = ({ isOpen, onClose }) => {
         pickupLng: pickupCoords.lng,
         destinationLat: destinationCoords.lat,
         destinationLng: destinationCoords.lng,
-        vehicleType: vehicleType
+        rideType: rideType
       });
       setCreatedRide({
         id: data.requestRide.ride.id,
@@ -247,17 +247,17 @@ const BookRideModal: React.FC<BookRideModalProps> = ({ isOpen, onClose }) => {
               {/* Vehicle Type */}
               <div className="grid grid-cols-2 gap-4">
                 <button 
-                  onClick={() => setVehicleType('ride')}
-                  className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 ${vehicleType === 'ride' ? 'border-primary-light bg-primary-light/5' : 'border-slate-100 dark:border-white/5'}`}
+                  onClick={() => setRideType('ride')}
+                  className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 ${rideType === 'ride' ? 'border-primary-light bg-primary-light/5' : 'border-slate-100 dark:border-white/5'}`}
                 >
-                  <Bike size={24} className={vehicleType === 'ride' ? 'text-primary-light' : 'text-slate-400'} />
+                  <Bike size={24} className={rideType === 'ride' ? 'text-primary-light' : 'text-slate-400'} />
                   <span className="text-xs font-black uppercase tracking-widest">Ride</span>
                 </button>
                 <button 
-                  onClick={() => setVehicleType('delivery')}
-                  className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 ${vehicleType === 'delivery' ? 'border-amber-500 bg-amber-500/5' : 'border-slate-100 dark:border-white/5'}`}
+                  onClick={() => setRideType('delivery')}
+                  className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 ${rideType === 'delivery' ? 'border-amber-500 bg-amber-500/5' : 'border-slate-100 dark:border-white/5'}`}
                 >
-                  <Zap size={24} className={vehicleType === 'delivery' ? 'text-amber-500' : 'text-slate-400'} />
+                  <Zap size={24} className={rideType === 'delivery' ? 'text-amber-500' : 'text-slate-400'} />
                   <span className="text-xs font-black uppercase tracking-widest">Delivery</span>
                 </button>
               </div>
