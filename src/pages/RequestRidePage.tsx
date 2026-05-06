@@ -63,10 +63,156 @@ const rideOptions: { id: RideType; label: string; desc: string; icon: React.Elem
   { id: 'delivery', label: 'Delivery', desc: 'Fast Goods Delivery', icon: Zap, color: 'text-amber-500' },
 ];
 
+interface Suggestion {
+  display_name: string;
+  lat: number;
+  lon: number;
+  distance?: number;
+}
+
+interface AutocompleteInputProps {
+  value: string;
+  onChange: (val: string) => void;
+  onSelect: (address: string, lat: number, lng: number) => void;
+  placeholder: string;
+  icon: React.ReactNode;
+  isActive: boolean;
+  onFocus: () => void;
+  refLat?: number;
+  refLng?: number;
+  containerClassName?: string;
+  inputClassName?: string;
+  rightElement?: React.ReactNode;
+}
+
+const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
+  value, onChange, onSelect, placeholder, icon, isActive, onFocus, refLat, refLng, containerClassName, inputClassName, rightElement
+}) => {
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  
+  useEffect(() => {
+    if (!value || value.length < 3) {
+      setSuggestions([]);
+      return;
+    }
+    
+    const timer = setTimeout(async () => {
+      setLoading(true);
+      try {
+        let url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(value)}&format=json&limit=10&countrycodes=tz`;
+        const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+        const data = await res.json();
+        
+        let processed = data.map((d: any) => ({
+          display_name: d.display_name?.split(',').slice(0, 3).join(', ') || d.display_name,
+          lat: parseFloat(d.lat),
+          lon: parseFloat(d.lon),
+        }));
+        
+        if (refLat && refLng) {
+          const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+            const R = 6371; // km
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+          };
+          
+          processed.forEach((item: any) => {
+            item.distance = getDistance(refLat, refLng, item.lat, item.lon);
+          });
+          processed.sort((a: any, b: any) => (a.distance || 0) - (b.distance || 0));
+        }
+        
+        const unique = processed.filter((v: any, i: number, a: any[]) => a.findIndex(t => (t.display_name === v.display_name)) === i);
+        
+        setSuggestions(unique);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, [value, refLat, refLng]);
+
+  return (
+    <div className={`relative rounded-2xl border-2 transition-all ${containerClassName}`} onClick={onFocus}>
+      {icon}
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => {
+          onChange(e.target.value);
+          setShowSuggestions(true);
+        }}
+        onFocus={() => {
+          onFocus();
+          if (value.length >= 3) setShowSuggestions(true);
+        }}
+        onBlur={() => {
+          setTimeout(() => setShowSuggestions(false), 200);
+        }}
+        placeholder={placeholder}
+        className={`w-full bg-slate-50 dark:bg-black/40 rounded-2xl text-sm font-bold focus:outline-none text-slate-900 dark:text-white ${inputClassName}`}
+      />
+      {rightElement}
+      
+      {showSuggestions && (suggestions.length > 0 || loading) && isActive && (
+        <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl z-50 overflow-hidden max-h-60 overflow-y-auto">
+          {loading && suggestions.length === 0 ? (
+            <div className="p-4 text-center text-xs text-slate-500 font-bold">Searching...</div>
+          ) : (
+            <ul>
+              {suggestions.map((s, i) => (
+                <li
+                  key={i}
+                  className="px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer border-b border-slate-100 dark:border-slate-700/50 last:border-0 flex justify-between items-center"
+                  onMouseDown={(e) => {
+                    // Using onMouseDown instead of onClick to fire before onBlur
+                    e.preventDefault();
+                    onChange(s.display_name);
+                    onSelect(s.display_name, s.lat, s.lon);
+                    setShowSuggestions(false);
+                  }}
+                >
+                  <span className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate pr-4">{s.display_name}</span>
+                  {s.distance !== undefined && (
+                    <span className="text-[10px] font-black text-primary-light whitespace-nowrap bg-primary-light/10 px-2 py-1 rounded-md">
+                      {s.distance < 1 ? `${Math.round(s.distance * 1000)}m` : `${s.distance.toFixed(1)}km`}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const RequestRidePage: React.FC = () => {
-  const [pickup, setPickup] = useState('');
+  const [pickup, setPickup] = useState(() => localStorage.getItem('boda_cached_pickup_address') || '');
+  const [pickupCoords, setPickupCoords] = useState<Coords | null>(() => {
+    const cached = localStorage.getItem('boda_cached_location');
+    if (cached) {
+      try {
+        const [lat, lng] = JSON.parse(cached);
+        return { lat, lng };
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  });
   const [destination, setDestination] = useState('');
-  const [pickupCoords, setPickupCoords] = useState<Coords | null>(null);
   const [destCoords, setDestCoords] = useState<Coords | null>(null);
   const [rideType, setRideType] = useState<RideType>('ride');
   const [estimate, setEstimate] = useState<RideEstimate | null>(null);
@@ -149,21 +295,27 @@ const RequestRidePage: React.FC = () => {
     setMidwayStops(midwayStops.filter(s => s.id !== id));
   };
 
-  const handleUseCurrentLocation = useCallback(() => {
+  const handleUseCurrentLocation = useCallback((isManual = false) => {
     if (!navigator.geolocation) return;
     setIsLocating(true);
     
     const success = async (pos: GeolocationPosition) => {
       const { latitude, longitude } = pos.coords;
       setPickupCoords({ lat: latitude, lng: longitude });
+      localStorage.setItem('boda_cached_location', JSON.stringify([latitude, longitude]));
       const address = await reverseGeocode(latitude, longitude);
       setPickup(address);
+      localStorage.setItem('boda_cached_pickup_address', address);
       setIsLocating(false);
-      setActiveInput('destination');
+      if (isManual) {
+        setActiveInput('destination');
+      }
     };
 
     const error = () => {
-      alert("Unable to retrieve your location. Please check permissions.");
+      if (isManual) {
+        alert("Unable to retrieve your location. Please check permissions.");
+      }
       setIsLocating(false);
     };
 
@@ -175,7 +327,7 @@ const RequestRidePage: React.FC = () => {
 
   // Auto-locate on mount
   useEffect(() => {
-    handleUseCurrentLocation();
+    handleUseCurrentLocation(false);
   }, [handleUseCurrentLocation]);
 
   const handleRequestRide = async () => {
@@ -244,75 +396,86 @@ const RequestRidePage: React.FC = () => {
               <div className="absolute left-[21px] top-10 h-[calc(100%-2.5rem)] w-0.5 border-l-2 border-dashed border-slate-200 dark:border-white/10 pointer-events-none" />
 
               {/* Pickup */}
-              <div
-                className={`relative rounded-2xl border-2 transition-all ${activeInput === 'pickup' ? 'border-green-500 shadow-lg shadow-green-500/10' : 'border-slate-100 dark:border-white/5'}`}
-                onClick={() => setActiveInput('pickup')}
-              >
-                <MapPin size={18} className={`absolute left-4 top-1/2 -translate-y-1/2 ${activeInput === 'pickup' ? 'text-green-500' : 'text-slate-400'}`} />
-                <input
-                  type="text"
-                  value={pickup}
-                  onChange={(e) => setPickup(e.target.value)}
-                  onFocus={() => setActiveInput('pickup')}
-                  placeholder="Pickup location"
-                  className="w-full pl-11 pr-28 py-4 bg-slate-50 dark:bg-black/40 rounded-2xl text-sm font-bold focus:outline-none text-slate-900 dark:text-white"
-                />
-                <button
-                  onClick={handleUseCurrentLocation}
-                  disabled={isLocating}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-primary-light uppercase tracking-tighter hover:underline bg-primary-light/10 px-2 py-1.5 rounded-lg flex items-center gap-1"
-                >
-                  {isLocating ? <RefreshCcw size={10} className="animate-spin" /> : <Navigation size={10} />}
-                  {isLocating ? 'Locating...' : 'Current'}
-                </button>
-              </div>
+              <AutocompleteInput
+                value={pickup}
+                onChange={setPickup}
+                onSelect={(address, lat, lng) => {
+                  setPickupCoords({ lat, lng });
+                  setActiveInput(midwayStops.length > 0 ? 0 : 'destination');
+                }}
+                placeholder="Pickup location"
+                icon={<MapPin size={18} className={`absolute left-4 top-1/2 -translate-y-1/2 ${activeInput === 'pickup' ? 'text-green-500' : 'text-slate-400'}`} />}
+                isActive={activeInput === 'pickup'}
+                onFocus={() => setActiveInput('pickup')}
+                containerClassName={activeInput === 'pickup' ? 'border-green-500 shadow-lg shadow-green-500/10 z-50' : 'border-slate-100 dark:border-white/5 z-10'}
+                inputClassName="pl-11 pr-28 py-4"
+                rightElement={
+                  <button
+                    onClick={() => handleUseCurrentLocation(true)}
+                    disabled={isLocating}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-primary-light uppercase tracking-tighter hover:underline bg-primary-light/10 px-2 py-1.5 rounded-lg flex items-center gap-1"
+                  >
+                    {isLocating ? <RefreshCcw size={10} className="animate-spin" /> : <Navigation size={10} />}
+                    {isLocating ? 'Locating...' : 'Current'}
+                  </button>
+                }
+              />
 
               {/* Midway Stops */}
               {midwayStops.map((stop, idx) => (
-                <div
+                <AutocompleteInput
                   key={stop.id}
-                  className={`relative rounded-2xl border-2 transition-all ${activeInput === idx ? 'border-amber-500 shadow-lg shadow-amber-500/10' : 'border-slate-100 dark:border-white/5'}`}
-                  onClick={() => setActiveInput(idx)}
-                >
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 rounded-full bg-amber-500/20 flex items-center justify-center text-[10px] font-black text-amber-600">
-                    {idx + 1}
-                  </div>
-                  <input
-                    type="text"
-                    value={stop.address}
-                    onChange={(e) => {
-                      const ns = [...midwayStops];
-                      ns[idx].address = e.target.value;
-                      setMidwayStops(ns);
-                    }}
-                    onFocus={() => setActiveInput(idx)}
-                    placeholder={`Midway Stop ${idx + 1}`}
-                    className="w-full pl-11 pr-10 py-4 bg-slate-50 dark:bg-black/40 rounded-2xl text-sm font-bold focus:outline-none text-slate-900 dark:text-white"
-                  />
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); removeMidwayStop(stop.id); }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-red-500 transition-colors"
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
+                  value={stop.address}
+                  onChange={(val) => {
+                    const ns = [...midwayStops];
+                    ns[idx].address = val;
+                    setMidwayStops(ns);
+                  }}
+                  onSelect={(address, lat, lng) => {
+                    const ns = [...midwayStops];
+                    ns[idx].coords = { lat, lng };
+                    setMidwayStops(ns);
+                    setActiveInput(idx + 1 < midwayStops.length ? idx + 1 : 'destination');
+                  }}
+                  placeholder={`Midway Stop ${idx + 1}`}
+                  icon={
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 rounded-full bg-amber-500/20 flex items-center justify-center text-[10px] font-black text-amber-600">
+                      {idx + 1}
+                    </div>
+                  }
+                  isActive={activeInput === idx}
+                  onFocus={() => setActiveInput(idx)}
+                  refLat={pickupCoords?.lat}
+                  refLng={pickupCoords?.lng}
+                  containerClassName={activeInput === idx ? 'border-amber-500 shadow-lg shadow-amber-500/10 z-50' : 'border-slate-100 dark:border-white/5 z-10'}
+                  inputClassName="pl-11 pr-10 py-4"
+                  rightElement={
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); removeMidwayStop(stop.id); }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-red-500 transition-colors z-10"
+                    >
+                      <X size={16} />
+                    </button>
+                  }
+                />
               ))}
 
               {/* Destination */}
-              <div
-                className={`relative rounded-2xl border-2 transition-all ${activeInput === 'destination' ? 'border-primary-light shadow-lg shadow-primary-light/10' : 'border-slate-100 dark:border-white/5'}`}
-                onClick={() => setActiveInput('destination')}
-              >
-                <Navigation size={18} className={`absolute left-4 top-1/2 -translate-y-1/2 ${activeInput === 'destination' ? 'text-primary-light' : 'text-slate-400'}`} />
-                <input
-                  type="text"
-                  value={destination}
-                  onChange={(e) => setDestination(e.target.value)}
-                  onFocus={() => setActiveInput('destination')}
-                  placeholder="Final Destination"
-                  className="w-full pl-11 pr-4 py-4 bg-slate-50 dark:bg-black/40 rounded-2xl text-sm font-bold focus:outline-none text-slate-900 dark:text-white"
-                />
-              </div>
+              <AutocompleteInput
+                value={destination}
+                onChange={setDestination}
+                onSelect={(address, lat, lng) => {
+                  setDestCoords({ lat, lng });
+                }}
+                placeholder="Final Destination"
+                icon={<Navigation size={18} className={`absolute left-4 top-1/2 -translate-y-1/2 ${activeInput === 'destination' ? 'text-primary-light' : 'text-slate-400'}`} />}
+                isActive={activeInput === 'destination'}
+                onFocus={() => setActiveInput('destination')}
+                refLat={pickupCoords?.lat}
+                refLng={pickupCoords?.lng}
+                containerClassName={activeInput === 'destination' ? 'border-primary-light shadow-lg shadow-primary-light/10 z-50' : 'border-slate-100 dark:border-white/5 z-10'}
+                inputClassName="pl-11 pr-4 py-4"
+              />
 
               <button 
                 onClick={addMidwayStop}

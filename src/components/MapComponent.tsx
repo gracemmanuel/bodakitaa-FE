@@ -133,9 +133,12 @@ const MapComponent: React.FC<MapComponentProps> = ({
   useEffect(() => {
     if (mapRef.current || !mapContainer.current) return;
 
-    // Default center: Dar es Salaam (Fallback)
+    const cachedStr = localStorage.getItem('boda_cached_location');
+    const defaultCenter: [number, number] = cachedStr ? JSON.parse(cachedStr) : [-6.7924, 39.2083];
+
+    // Default center: Cached location or Dar es Salaam (Fallback)
     mapRef.current = L.map(mapContainer.current, {
-      center: [-6.7924, 39.2083],
+      center: defaultCenter,
       zoom: 13,
       zoomControl: false,
     });
@@ -199,6 +202,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
           ({ coords }) => {
             if (mapRef.current) {
               const { latitude, longitude } = coords;
+              localStorage.setItem('boda_cached_location', JSON.stringify([latitude, longitude]));
               console.log("Location found:", latitude, longitude);
               mapRef.current.setView([latitude, longitude], 14);
               updateUserLocationMarker(latitude, longitude);
@@ -212,6 +216,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
               ({ coords }) => {
                 if (mapRef.current) {
                   const { latitude, longitude } = coords;
+                  localStorage.setItem('boda_cached_location', JSON.stringify([latitude, longitude]));
                   mapRef.current.setView([latitude, longitude], 14);
                   updateUserLocationMarker(latitude, longitude);
                   updateMockRiders(latitude, longitude);
@@ -231,6 +236,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
         // Also watch for changes
         navigator.geolocation.watchPosition(
           ({ coords }) => {
+            localStorage.setItem('boda_cached_location', JSON.stringify([coords.latitude, coords.longitude]));
             updateUserLocationMarker(coords.latitude, coords.longitude);
           },
           null,
@@ -420,6 +426,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
           if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
               ({ coords }) => {
+                localStorage.setItem('boda_cached_location', JSON.stringify([coords.latitude, coords.longitude]));
                 mapRef.current?.flyTo([coords.latitude, coords.longitude], 15);
               },
               (err) => alert("Could not get location: " + err.message),
