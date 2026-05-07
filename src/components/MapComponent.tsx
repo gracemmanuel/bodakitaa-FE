@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Navigation as NavigationIcon } from 'lucide-react';
@@ -32,18 +32,18 @@ const createColoredMarker = (color: string) =>
 const createRiderMarker = () =>
   L.divIcon({
     html: `
-      <div style="
-        width: 32px; height: 32px;
-        background: #FE7743;
-        border: 3px solid white;
-        border-radius: 50%;
-        display: flex; align-items: center; justify-content: center;
-        box-shadow: 0 4px 16px rgba(254,119,67,0.5);
-        animation: pulse 2s infinite;
-      ">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
-          <path d="M12 2L2 12h3v8h6v-5h2v5h6v-8h3L12 2z"/>
-        </svg>
+      <div style="position:relative;width:32px;height:32px;">
+        <div style="
+          position:absolute;inset:0;border-radius:50%;
+          border:2px solid rgba(254,119,67,0.3);
+          animation:leaflet-ping 1.8s ease-out infinite;
+        "></div>
+        <div style="
+          position:absolute;inset:2px;background:#FE7743;border-radius:50%;
+          display:flex;align-items:center;justify-content:center;
+          border:2px solid white;box-shadow:0 4px 10px rgba(254,119,67,0.4);
+          font-size:12px;
+        ">🏍</div>
       </div>`,
     className: '',
     iconAnchor: [16, 16],
@@ -284,14 +284,13 @@ const MapComponent: React.FC<MapComponentProps> = ({
     if (pickupMarkerRef.current) {
       pickupMarkerRef.current.remove();
     }
-    if (pickupCoords) {
+    if (pickupCoords && mapRef.current) {
       pickupMarkerRef.current = L.marker(pickupCoords, { icon: createColoredMarker('#22c55e') })
         .addTo(mapRef.current)
         .bindPopup('<b>Pickup Location</b>')
         .openPopup();
       mapRef.current.flyTo(pickupCoords, 15, { duration: 1 });
     }
-    drawRoute();
   }, [pickupCoords]);
 
   // --- Update Destination Marker ---
@@ -300,13 +299,12 @@ const MapComponent: React.FC<MapComponentProps> = ({
     if (destMarkerRef.current) {
       destMarkerRef.current.remove();
     }
-    if (destinationCoords) {
+    if (destinationCoords && mapRef.current) {
       destMarkerRef.current = L.marker(destinationCoords, { icon: createColoredMarker('#FE7743') })
         .addTo(mapRef.current)
         .bindPopup('<b>Destination</b>')
         .openPopup();
     }
-    drawRoute();
   }, [destinationCoords]);
 
   // --- Update Active Rider Marker ---
@@ -339,24 +337,25 @@ const MapComponent: React.FC<MapComponentProps> = ({
     midwayMarkersRef.current = [];
 
     midwayStops?.forEach((coords, idx) => {
+      if (!mapRef.current) return;
       const m = L.marker(coords, { icon: createColoredMarker('#fbbf24') })
-        .addTo(mapRef.current!)
+        .addTo(mapRef.current)
         .bindPopup(`<b>Stop ${idx + 1}</b>`);
       midwayMarkersRef.current.push(m);
     });
-
-    drawRoute();
   }, [midwayStops]);
 
   // --- Draw Route via OSRM ---
-  const drawRoute = async () => {
+  const drawRoute = useCallback(async () => {
+    if (!mapRef.current) return;
+
     // 1. Always remove existing route layer first
     if (routeLayerRef.current) {
       routeLayerRef.current.remove();
       routeLayerRef.current = null;
     }
 
-    if (!mapRef.current || !pickupCoords || !destinationCoords) return;
+    if (!pickupCoords || !destinationCoords) return;
 
     try {
       const waypoints = [
@@ -365,46 +364,44 @@ const MapComponent: React.FC<MapComponentProps> = ({
         destinationCoords
       ];
 
-      console.log("Rerouting with waypoints:", waypoints);
-
       const coordsString = waypoints
         .map(([lat, lng]) => `${lng},${lat}`)
         .join(';');
 
-      // OSRM public API – free and no API key needed
       const url = `https://router.project-osrm.org/route/v1/driving/${coordsString}?overview=full&geometries=geojson`;
       const res = await fetch(url);
       const json = await res.json();
 
-      if (json.routes && json.routes.length > 0) {
+      if (json.routes && json.routes.length > 0 && mapRef.current) {
         const coords: [number, number][] = json.routes[0].geometry.coordinates.map(
-          (c: [number, number]) => [c[1], c[0]] // OSRM returns [lng, lat], Leaflet wants [lat, lng]
+          (c: [number, number]) => [c[1], c[0]]
         );
 
         routeLayerRef.current = L.polyline(coords, {
           color: '#FE7743',
           weight: 5,
           opacity: 0.8,
-          dashArray: undefined,
         }).addTo(mapRef.current);
 
-        // Fit map to route bounds
         mapRef.current.fitBounds(routeLayerRef.current.getBounds(), { padding: [60, 60] });
       }
     } catch (err) {
-      // Fallback: draw straight line if OSRM fails
       console.warn('OSRM routing failed, drawing fallback line:', err);
-      if (pickupCoords && destinationCoords) {
+      if (pickupCoords && destinationCoords && mapRef.current) {
         routeLayerRef.current = L.polyline([pickupCoords, destinationCoords], {
           color: '#FE7743',
           weight: 4,
           opacity: 0.6,
           dashArray: '10, 8',
-        }).addTo(mapRef.current!);
+        }).addTo(mapRef.current);
         mapRef.current.fitBounds([pickupCoords, destinationCoords], { padding: [60, 60] });
       }
     }
-  };
+  }, [pickupCoords, destinationCoords, midwayStops]);
+
+  useEffect(() => {
+    drawRoute();
+  }, [drawRoute]);
 
   return (
     <div className={`relative w-full h-full ${className ?? ''}`}>

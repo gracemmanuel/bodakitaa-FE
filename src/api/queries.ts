@@ -161,6 +161,19 @@ export const GET_MY_ACTIVE_REQUEST = gql`
   }
 `;
 
+export const CONFIRM_RIDE = gql`
+  mutation ConfirmRide($rideId: Int!) {
+    confirmRide(rideId: $rideId) {
+      success
+      message
+      ride {
+        id
+        status
+      }
+    }
+  }
+`;
+
 export const ACCEPT_RIDE = gql`
   mutation AcceptRide($rideId: Int!) {
     acceptRide(rideId: $rideId) {

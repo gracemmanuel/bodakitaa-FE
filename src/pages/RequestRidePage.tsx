@@ -6,8 +6,8 @@ import {
 import CombinedNav from '../components/CombinedNav';
 import MapComponent from '../components/MapComponent';
 import { graphqlClient } from '../api';
-import { useQuery } from '@apollo/client/react';
-import { GET_MY_ACTIVE_REQUEST } from '../api/queries';
+import { useQuery, useMutation } from '@apollo/client/react';
+import { GET_MY_ACTIVE_REQUEST, CONFIRM_RIDE } from '../api/queries';
 
 // --- Types ---
 type RideType = 'ride' | 'delivery';
@@ -226,6 +226,7 @@ const RequestRidePage: React.FC = () => {
   const [activeInput, setActiveInput] = useState<'pickup' | 'destination' | number>('pickup');
   const [isLocating, setIsLocating] = useState(false);
   const [midwayStops, setMidwayStops] = useState<{ id: string; address: string; coords: Coords | null }[]>([]);
+  const [confirmRide, { loading: isConfirming }] = useMutation(CONFIRM_RIDE);
 
   // ── Poll active ride for client tracking ─────────────────────────────────
   const { data: trackingData, stopPolling, startPolling } = useQuery(GET_MY_ACTIVE_REQUEST, {
@@ -416,32 +417,29 @@ const RequestRidePage: React.FC = () => {
                   trackedRide?.status === 'accepted' ? 'bg-primary-light/15 border border-primary-light/30' :
                   'bg-amber-500/15 border border-amber-500/30'
                 }`}>
-                  <div className={`w-3 h-3 rounded-full animate-pulse flex-shrink-0 ${
-                    trackedRide?.status === 'completed' ? 'bg-green-500' :
-                    trackedRide?.status === 'in_progress' ? 'bg-blue-500' :
-                    trackedRide?.status === 'accepted' ? 'bg-primary-light' : 'bg-amber-500'
-                  }`} />
-                  <div>
                     <p className={`font-black text-sm ${
                       trackedRide?.status === 'completed' ? 'text-green-600 dark:text-green-400' :
                       trackedRide?.status === 'in_progress' ? 'text-blue-600 dark:text-blue-400' :
-                      trackedRide?.status === 'accepted' ? 'text-primary-light' : 'text-amber-600 dark:text-amber-400'
+                      trackedRide?.status === 'confirmed' ? 'text-primary-light' :
+                      trackedRide?.status === 'accepted' ? 'text-amber-600 dark:text-amber-400' :
+                      'text-amber-600 dark:text-amber-400'
                     }`}>
                       {trackedRide?.status === 'pending' && 'Searching for a rider...'}
-                      {trackedRide?.status === 'accepted' && 'Rider is on the way!'}
+                      {trackedRide?.status === 'accepted' && 'Rider Found! Review details below'}
+                      {trackedRide?.status === 'confirmed' && 'Rider is on the way!'}
                       {trackedRide?.status === 'in_progress' && 'Journey in progress'}
                       {trackedRide?.status === 'completed' && 'Ride Completed!'}
                       {!trackedRide && 'Booking confirmed — waiting for riders...'}
                     </p>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                       {trackedRide?.status === 'pending' && 'Your request is live. Riders near you can see it.'}
-                      {trackedRide?.status === 'accepted' && 'Your rider has confirmed and is heading to pick you up.'}
+                      {trackedRide?.status === 'accepted' && 'Please confirm the rider to start your journey.'}
+                      {trackedRide?.status === 'confirmed' && 'Your rider has confirmed and is heading to pick you up.'}
                       {trackedRide?.status === 'in_progress' && 'En route to your destination.'}
                       {trackedRide?.status === 'completed' && 'Thank you for riding with BodaKitaa!'}
                       {!trackedRide && 'Live-updating every 5 seconds.'}
                     </p>
                   </div>
-                </div>
 
                 {/* Rider Info — shown once accepted */}
                 {trackedRide?.rider && (
@@ -460,8 +458,15 @@ const RequestRidePage: React.FC = () => {
                           {parseFloat(trackedRide.rider.rating || 5).toFixed(1)} rating
                         </div>
                         {trackedRide.rider.plateNumber && (
-                          <div className="mt-1.5 inline-flex items-center gap-1 bg-primary-light/20 text-primary-light px-2 py-0.5 rounded-lg text-xs font-black">
-                            {trackedRide.rider.plateNumber}
+                          <div className="mt-1.5 flex flex-wrap gap-2">
+                            <div className="inline-flex items-center gap-1 bg-primary-light/20 text-primary-light px-2 py-0.5 rounded-lg text-[10px] font-black uppercase">
+                              Bike: {trackedRide.rider.plateNumber}
+                            </div>
+                            {trackedRide.rider.licenseNumber && (
+                              <div className="inline-flex items-center gap-1 bg-blue-500/20 text-blue-500 px-2 py-0.5 rounded-lg text-[10px] font-black uppercase">
+                                ID: {trackedRide.rider.licenseNumber}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
@@ -492,6 +497,22 @@ const RequestRidePage: React.FC = () => {
                           })()}
                         </span>
                       </div>
+                    )}
+
+                    {/* CLIENT CONFIRMATION BUTTON */}
+                    {trackedRide.status === 'accepted' && (
+                      <button
+                        onClick={async () => {
+                          try {
+                            await confirmRide({ variables: { rideId: parseInt(trackedRide.id) } });
+                          } catch (e) { console.error(e); }
+                        }}
+                        disabled={isConfirming}
+                        className="w-full py-3.5 bg-green-500 hover:bg-green-600 text-white font-black rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-green-500/30"
+                      >
+                        {isConfirming ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle2 size={18} />}
+                        Confirm & Start Journey
+                      </button>
                     )}
                   </div>
                 )}

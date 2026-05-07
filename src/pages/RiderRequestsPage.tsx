@@ -2,8 +2,10 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useMutation, useQuery } from '@apollo/client/react';
 import {
   MapPin, Phone, Star, Clock, ChevronRight, CheckCircle2,
-  Navigation, X, Loader2, AlertCircle, RefreshCcw, User, Bike
+  Navigation, X, Loader2, AlertCircle, RefreshCcw, User, Bike,
+  Bell, MapPin as MapPinIcon, Info
 } from 'lucide-react';
+import { gsap } from 'gsap';
 import CombinedNav from '../components/CombinedNav';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -140,9 +142,15 @@ const ActiveRidePanel: React.FC<{
 
   return (
     <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-black text-white rounded-2xl border border-white/10 overflow-hidden shadow-2xl">
-      <div className={`px-4 py-2 text-xs font-bold uppercase tracking-wider flex items-center gap-2 ${isInProgress ? 'bg-green-500/20 text-green-400' : 'bg-amber-500/20 text-amber-400'}`}>
+      <div className={`px-4 py-2 text-xs font-bold uppercase tracking-wider flex items-center gap-2 ${
+        isInProgress ? 'bg-green-500/20 text-green-400' : 
+        ride.status === 'confirmed' ? 'bg-blue-500/20 text-blue-400' :
+        'bg-amber-500/20 text-amber-400'
+      }`}>
         <div className="w-2 h-2 rounded-full bg-current animate-pulse" />
-        {isInProgress ? 'Journey In Progress' : 'Ride Accepted — Head to Pickup'}
+        {isInProgress ? 'Journey In Progress' : 
+         ride.status === 'confirmed' ? 'Client Confirmed — Start Journey' :
+         'Rider Accepted — Waiting for Client'}
       </div>
       <div className="p-4 space-y-3">
         <div className="flex items-center gap-3">
@@ -176,7 +184,7 @@ const ActiveRidePanel: React.FC<{
           <span className="font-black text-green-400 text-base">TZS {parseFloat(ride.totalFare || 0).toLocaleString()}</span>
         </div>
 
-        {!isInProgress ? (
+        {ride.status === 'confirmed' ? (
           <button
             onClick={onStart}
             disabled={startingRide}
@@ -185,6 +193,11 @@ const ActiveRidePanel: React.FC<{
             {startingRide ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
             Confirm Pickup — Start Journey
           </button>
+        ) : !isInProgress ? (
+           <div className="w-full py-3 bg-slate-100 dark:bg-white/5 text-slate-400 font-bold rounded-xl text-center text-xs flex items-center justify-center gap-2">
+             <Clock size={14} className="animate-spin" />
+             Awaiting Client Confirmation...
+           </div>
         ) : (
           <button
             onClick={onComplete}
@@ -212,7 +225,11 @@ const RiderRequestsPage: React.FC = () => {
   const [riderPos, setRiderPos] = useState<[number, number] | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [activeRide, setActiveRide] = useState<any>(null);
+  const [newRequest, setNewRequest] = useState<any>(null);
+  const [ignoredIds, setIgnoredIds] = useState<Set<string>>(new Set());
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+  const prevRidesRef = useRef<string[]>([]);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
     setToast({ msg, type });
@@ -293,7 +310,6 @@ const RiderRequestsPage: React.FC = () => {
     }
   }, [queryError]);
 
-  // ── Fetch active ride on mount & poll for status changes (e.g. cancellation) ──
   const { data: activeData, refetch: refetchActive } = useQuery(GET_ACTIVE_RIDE_FOR_RIDER, { 
     fetchPolicy: 'network-only',
     pollInterval: 5000 
@@ -306,7 +322,46 @@ const RiderRequestsPage: React.FC = () => {
     }
   }, [activeData]);
 
-  const pendingRides: any[] = pendingData?.pendingRideRequests ?? [];
+  const pendingRides: any[] = (pendingData?.pendingRideRequests ?? []).filter((r: any) => !ignoredIds.has(r.id));
+
+  // ── Detect new incoming requests ──────────────────────────────────────────
+  useEffect(() => {
+    if (!activeRide) {
+      const currentIds = pendingRides.map(r => r.id);
+      
+      // 1. Close modal if the request we are looking at is gone
+      if (newRequest && !currentIds.includes(newRequest.id)) {
+        setNewRequest(null);
+      }
+
+      // 2. Identify brand new IDs
+      const newIds = currentIds.filter(id => !prevRidesRef.current.includes(id));
+      if (newIds.length > 0) {
+        const ride = pendingRides.find(r => r.id === newIds[0]);
+        setNewRequest(ride);
+      }
+      
+      prevRidesRef.current = currentIds;
+    } else {
+      setNewRequest(null);
+    }
+  }, [pendingRides, activeRide, newRequest]);
+  
+
+  // ── Modal Animation ───────────────────────────────────────────────────────
+  useEffect(() => {
+    if (newRequest && modalRef.current) {
+      gsap.fromTo(modalRef.current, 
+        { scale: 0.8, opacity: 0, y: 50 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: "back.out(1.7)" }
+      );
+    }
+  }, [newRequest]);
+
+  const handleIgnore = (id: string) => {
+    setIgnoredIds(prev => new Set(prev).add(id));
+    setNewRequest(null);
+  };
   const selectedRide = pendingRides.find(r => r.id === selectedId) ?? null;
 
   // ── Draw route when selection changes ────────────────────────────────────
@@ -422,13 +477,15 @@ const RiderRequestsPage: React.FC = () => {
     return () => clearInterval(interval);
   }, [activeRide?.id, riderPos, updateRiderLocation]);
 
-  const handleAccept = useCallback(async () => {
-    if (!selectedRide) return;
+  const handleAccept = useCallback(async (manualRide?: any) => {
+    const rideToAccept = manualRide || selectedRide;
+    if (!rideToAccept) return;
     try {
-      const { data } = await acceptRide({ variables: { rideId: parseInt(selectedRide.id) } });
+      const { data } = await acceptRide({ variables: { rideId: parseInt(rideToAccept.id) } });
       if (data?.acceptRide?.success) {
         setActiveRide(data.acceptRide.ride);
         setSelectedId(null);
+        setNewRequest(null);
         showToast('Ride accepted! Head to the pickup location.');
         refetch();
         refetchActive();
@@ -488,12 +545,106 @@ const RiderRequestsPage: React.FC = () => {
           0% { transform: scale(1); opacity: 1; }
           100% { transform: scale(3); opacity: 0; }
         }
+        @keyframes shrink-x {
+          from { transform: scaleX(1); }
+          to { transform: scaleX(0); }
+        }
+        .animate-shrink-x {
+          animation-name: shrink-x;
+          animation-timing-function: linear;
+          animation-fill-mode: forwards;
+        }
       `}</style>
       {/* Toast */}
       {toast && (
         <div className={`fixed top-6 right-6 z-[9999] px-5 py-3 rounded-2xl font-bold text-sm shadow-2xl flex items-center gap-3 animate-in slide-in-from-top-2 ${toast.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
           {toast.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
           {toast.msg}
+        </div>
+      )}
+
+      {/* New Request Modal Overlay */}
+      {newRequest && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
+          <div 
+            ref={modalRef}
+            className="w-full max-w-md bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)] overflow-hidden border border-white/10"
+          >
+            <div className="bg-gradient-to-r from-primary-light to-orange-600 p-6 text-white relative">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-xl flex items-center justify-center shadow-inner">
+                  <Bell size={32} className="animate-bounce" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-black tracking-tight">New Request!</h2>
+                  <p className="text-white/80 text-sm font-bold flex items-center gap-1">
+                    <Star size={12} className="fill-current text-amber-300" />
+                    High-rated client nearby
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={() => handleIgnore(newRequest.id)}
+                className="absolute top-6 right-6 w-8 h-8 rounded-full bg-black/20 flex items-center justify-center hover:bg-black/40 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-8 space-y-6">
+              <div className="flex items-center gap-4 pb-6 border-b border-slate-100 dark:border-white/5">
+                <div className="w-14 h-14 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center overflow-hidden border-2 border-primary-light/20">
+                   <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${newRequest.client?.fullName}`} alt="client" />
+                </div>
+                <div>
+                  <p className="text-xl font-black text-slate-900 dark:text-white">{newRequest.client?.fullName}</p>
+                  <p className="text-green-500 font-black text-lg">TZS {parseFloat(newRequest.totalFare).toLocaleString()}</p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex gap-4">
+                  <div className="flex flex-col items-center gap-1 mt-1">
+                    <div className="w-4 h-4 rounded-full bg-green-500 shadow-[0_0_12px_rgba(34,197,94,0.5)]" />
+                    <div className="w-0.5 h-10 bg-slate-200 dark:bg-white/10" />
+                    <div className="w-4 h-4 rounded-full bg-primary-light shadow-[0_0_12px_rgba(254,119,67,0.5)]" />
+                  </div>
+                  <div className="flex-1 space-y-5">
+                    <div>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Pickup</p>
+                      <p className="text-sm font-bold text-slate-700 dark:text-slate-200 leading-tight">{newRequest.pickupAddress}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Destination</p>
+                      <p className="text-sm font-bold text-slate-700 dark:text-slate-200 leading-tight">{newRequest.destinationAddress}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={() => handleIgnore(newRequest.id)}
+                  className="flex-1 py-4 rounded-2xl bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 font-black text-sm hover:bg-red-500/10 hover:text-red-500 transition-all uppercase tracking-widest"
+                >
+                  Ignore
+                </button>
+                <button
+                  onClick={() => handleAccept(newRequest)}
+                  disabled={accepting}
+                  className="flex-[2] py-4 rounded-2xl bg-primary-light text-white font-black text-sm shadow-[0_20px_40px_-12px_rgba(254,119,67,0.5)] hover:shadow-[0_25px_50px_-12px_rgba(254,119,67,0.6)] hover:-translate-y-1 transition-all uppercase tracking-widest flex items-center justify-center gap-2"
+                >
+                  {accepting ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle2 size={18} />}
+                  Accept Now
+                </button>
+              </div>
+            </div>
+            
+            {/* Countdown bar */}
+            <div className="h-1.5 w-full bg-slate-100 dark:bg-white/5 overflow-hidden">
+               <div className="h-full bg-primary-light w-full animate-shrink-x origin-left" style={{ animationDuration: '15s' }} />
+            </div>
+          </div>
         </div>
       )}
 

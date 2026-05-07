@@ -1,6 +1,7 @@
 import React from 'react';
 import Sidebar from './Sidebar';
 import Nav from './Nav';
+import GlobalRideConfirmation from './GlobalRideConfirmation';
 
 interface CombinedNavProps {
   children: React.ReactNode;
@@ -34,6 +35,8 @@ const CombinedNav: React.FC<CombinedNavProps> = ({ children, role }) => {
         <main className="flex-1 overflow-y-auto p-4 md:p-10 z-10 custom-scrollbar relative">
           {children}
         </main>
+        
+        {role === 'client' && <GlobalRideConfirmation />}
       </div>
     </div>
   );
