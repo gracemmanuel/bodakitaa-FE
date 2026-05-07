@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   MapPin, Navigation, Clock, Shield, Bike, Star, 
-  CheckCircle2, CreditCard, ArrowRight, Zap, Award, AlertCircle, RefreshCcw, Plus, X
+  CheckCircle2, CreditCard, ArrowRight, Zap, Award, AlertCircle, RefreshCcw, Plus, X, Phone, User, Loader2
 } from 'lucide-react';
 import CombinedNav from '../components/CombinedNav';
 import MapComponent from '../components/MapComponent';
 import { graphqlClient } from '../api';
+import { useQuery } from '@apollo/client/react';
+import { GET_MY_ACTIVE_REQUEST } from '../api/queries';
 
 // --- Types ---
 type RideType = 'ride' | 'delivery';
@@ -218,11 +220,33 @@ const RequestRidePage: React.FC = () => {
   const [estimate, setEstimate] = useState<RideEstimate | null>(null);
   const [isEstimating, setIsEstimating] = useState(false);
   const [isRequesting, setIsRequesting] = useState(false);
+  const [isTracking, setIsTracking] = useState(false); // ← true after booking
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeInput, setActiveInput] = useState<'pickup' | 'destination' | number>('pickup');
   const [isLocating, setIsLocating] = useState(false);
   const [midwayStops, setMidwayStops] = useState<{ id: string; address: string; coords: Coords | null }[]>([]);
+
+  // ── Poll active ride for client tracking ─────────────────────────────────
+  const { data: trackingData, stopPolling, startPolling } = useQuery(GET_MY_ACTIVE_REQUEST, {
+    skip: !isTracking,
+    fetchPolicy: 'network-only',
+    pollInterval: 5000,
+  });
+  const trackedRide = trackingData?.myActiveRequest ?? null;
+
+  // Stop polling when ride is completed/cancelled
+  useEffect(() => {
+    if (trackedRide?.status === 'completed' || trackedRide?.status === 'cancelled') {
+      stopPolling();
+      setTimeout(() => {
+        setIsTracking(false);
+        setPickup(''); setDestination('');
+        setPickupCoords(null); setDestCoords(null);
+        setEstimate(null); setActiveInput('pickup');
+      }, 4000);
+    }
+  }, [trackedRide?.status, stopPolling]);
 
 
   // Calculate estimate whenever both coords or vehicle type change
@@ -360,14 +384,10 @@ const RequestRidePage: React.FC = () => {
         rideType,
         midwayStops: JSON.stringify(formattedStops)
       });
+      // Switch to live tracking mode
       setIsSuccess(true);
-      setTimeout(() => {
-        setIsSuccess(false);
-        setPickup(''); setDestination('');
-        setPickupCoords(null); setDestCoords(null);
-        setEstimate(null);
-        setActiveInput('pickup');
-      }, 3500);
+      setIsTracking(true);
+      startPolling(5000);
     } catch (err: any) {
       setError(err.message || 'Failed to request ride. Please try again.');
     } finally {
@@ -382,14 +402,152 @@ const RequestRidePage: React.FC = () => {
     <CombinedNav role="client">
       <div className="h-[calc(100vh-5.5rem)] flex flex-col lg:flex-row gap-5">
 
-        {/* ── Left Panel: Booking Form ── */}
+        {/* ── Left Panel: Booking Form OR Tracking ── */}
         <div className="w-full lg:w-[420px] flex-shrink-0 flex flex-col">
           <div className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-[2.5rem] p-7 shadow-xl overflow-y-auto custom-scrollbar flex flex-col gap-6">
+
+            {/* ── TRACKING MODE ── */}
+            {isTracking ? (
+              <div className="flex flex-col gap-5 flex-1">
+                {/* Status Banner */}
+                <div className={`rounded-2xl p-4 flex items-center gap-3 ${
+                  trackedRide?.status === 'completed' ? 'bg-green-500/15 border border-green-500/30' :
+                  trackedRide?.status === 'in_progress' ? 'bg-blue-500/15 border border-blue-500/30' :
+                  trackedRide?.status === 'accepted' ? 'bg-primary-light/15 border border-primary-light/30' :
+                  'bg-amber-500/15 border border-amber-500/30'
+                }`}>
+                  <div className={`w-3 h-3 rounded-full animate-pulse flex-shrink-0 ${
+                    trackedRide?.status === 'completed' ? 'bg-green-500' :
+                    trackedRide?.status === 'in_progress' ? 'bg-blue-500' :
+                    trackedRide?.status === 'accepted' ? 'bg-primary-light' : 'bg-amber-500'
+                  }`} />
+                  <div>
+                    <p className={`font-black text-sm ${
+                      trackedRide?.status === 'completed' ? 'text-green-600 dark:text-green-400' :
+                      trackedRide?.status === 'in_progress' ? 'text-blue-600 dark:text-blue-400' :
+                      trackedRide?.status === 'accepted' ? 'text-primary-light' : 'text-amber-600 dark:text-amber-400'
+                    }`}>
+                      {trackedRide?.status === 'pending' && 'Searching for a rider...'}
+                      {trackedRide?.status === 'accepted' && 'Rider is on the way!'}
+                      {trackedRide?.status === 'in_progress' && 'Journey in progress'}
+                      {trackedRide?.status === 'completed' && 'Ride Completed!'}
+                      {!trackedRide && 'Booking confirmed — waiting for riders...'}
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      {trackedRide?.status === 'pending' && 'Your request is live. Riders near you can see it.'}
+                      {trackedRide?.status === 'accepted' && 'Your rider has confirmed and is heading to pick you up.'}
+                      {trackedRide?.status === 'in_progress' && 'En route to your destination.'}
+                      {trackedRide?.status === 'completed' && 'Thank you for riding with BodaKitaa!'}
+                      {!trackedRide && 'Live-updating every 5 seconds.'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Rider Info — shown once accepted */}
+                {trackedRide?.rider && (
+                  <div className="bg-gradient-to-br from-slate-900 to-slate-800 dark:from-slate-800 dark:to-slate-900 text-white rounded-2xl p-5 border border-white/10 space-y-4">
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Your Rider</p>
+                    <div className="flex items-center gap-4">
+                      <img
+                        src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${trackedRide.rider.fullName}`}
+                        className="w-16 h-16 rounded-2xl bg-slate-700"
+                        alt="rider"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-black text-lg truncate">{trackedRide.rider.fullName}</p>
+                        <div className="flex items-center gap-1 text-amber-400 text-xs font-bold mt-0.5">
+                          <Star size={11} className="fill-current" />
+                          {parseFloat(trackedRide.rider.rating || 5).toFixed(1)} rating
+                        </div>
+                        {trackedRide.rider.plateNumber && (
+                          <div className="mt-1.5 inline-flex items-center gap-1 bg-primary-light/20 text-primary-light px-2 py-0.5 rounded-lg text-xs font-black">
+                            {trackedRide.rider.plateNumber}
+                          </div>
+                        )}
+                      </div>
+                      {trackedRide.rider.phone && (
+                        <a
+                          href={`tel:${trackedRide.rider.phone}`}
+                          className="w-11 h-11 bg-green-500 hover:bg-green-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-green-500/30 transition-colors"
+                        >
+                          <Phone size={18} />
+                        </a>
+                      )}
+                    </div>
+
+                    {/* ETA from rider location */}
+                    {trackedRide.riderLat && trackedRide.riderLng && (
+                      <div className="bg-white/5 rounded-xl p-3 flex items-center justify-between text-sm">
+                        <span className="text-slate-400 flex items-center gap-1.5"><Navigation size={13} /> Rider distance to you</span>
+                        <span className="font-bold text-white">
+                          {(() => {
+                            const R = 6371;
+                            const lat1 = pickupCoords?.lat ?? 0, lng1 = pickupCoords?.lng ?? 0;
+                            const lat2 = parseFloat(trackedRide.riderLat), lng2 = parseFloat(trackedRide.riderLng);
+                            const dLat = (lat2 - lat1) * Math.PI / 180;
+                            const dLng = (lng2 - lng1) * Math.PI / 180;
+                            const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+                            const km = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                            return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
+                          })()}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Pending — no rider yet, pulsing wait */}
+                {(!trackedRide || trackedRide.status === 'pending') && (
+                  <div className="flex flex-col items-center justify-center flex-1 gap-4 py-8">
+                    <div className="w-20 h-20 rounded-full bg-primary-light/10 flex items-center justify-center">
+                      <Loader2 size={36} className="animate-spin text-primary-light" />
+                    </div>
+                    <div className="text-center">
+                      <p className="font-black text-slate-900 dark:text-white">Finding nearby riders</p>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">We'll notify you the moment a rider accepts.</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Route summary */}
+                {trackedRide && (
+                  <div className="space-y-2 bg-slate-50 dark:bg-white/5 rounded-2xl p-4 text-sm">
+                    <div className="flex items-start gap-2">
+                      <div className="w-3 h-3 rounded-full bg-green-500 mt-1 flex-shrink-0" />
+                      <p className="text-slate-600 dark:text-slate-300 line-clamp-2">{trackedRide.pickupAddress}</p>
+                    </div>
+                    <div className="w-0.5 h-4 bg-slate-200 dark:bg-white/10 ml-1.5" />
+                    <div className="flex items-start gap-2">
+                      <div className="w-3 h-3 rounded-full bg-primary-light mt-1 flex-shrink-0" />
+                      <p className="text-slate-600 dark:text-slate-300 line-clamp-2">{trackedRide.destinationAddress}</p>
+                    </div>
+                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-200 dark:border-white/10">
+                      <span className="text-slate-500 font-medium">Estimated Fare</span>
+                      <span className="font-black text-green-600 dark:text-green-400">
+                        TZS {parseFloat(trackedRide.totalFare || 0).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Cancel / Done */}
+                {trackedRide?.status !== 'completed' && (
+                  <button
+                    onClick={() => { setIsTracking(false); stopPolling(); setIsSuccess(false); }}
+                    className="mt-auto w-full py-3 rounded-2xl border border-red-300 dark:border-red-500/30 text-red-500 dark:text-red-400 font-bold text-sm hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                  >
+                    Cancel / Go Back
+                  </button>
+                )}
+              </div>
+            ) : (
+              <>
             {/* Header */}
             <div>
               <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Request Ride</h1>
               <p className="text-slate-500 dark:text-slate-400 font-medium text-sm mt-1">Tap the map or type to set locations.</p>
             </div>
+
 
             {/* Location Inputs */}
             <div className="space-y-3 relative">
@@ -600,27 +758,44 @@ const RequestRidePage: React.FC = () => {
                 )}
               </button>
 
-              {/* Safety */}
               <div className="flex items-center gap-3 px-4 py-3 bg-blue-500/10 border border-blue-500/20 rounded-2xl text-blue-600 dark:text-blue-400">
                 <Shield size={18} />
                 <p className="text-[10px] font-bold uppercase tracking-wider">All rides are insured & live-tracked</p>
               </div>
             </div>
-          </div>
-        </div>
+          </>
+        )}
+      </div>
+    </div>
 
         {/* ── Right Panel: Map ── */}
         <div className="flex-1 rounded-[2.5rem] overflow-hidden border border-slate-200 dark:border-white/10 shadow-2xl relative min-h-[350px]">
           <MapComponent
-            pickupCoords={mapPickup}
-            destinationCoords={mapDest}
+            pickupCoords={isTracking && trackedRide?.pickupLat ? [parseFloat(trackedRide.pickupLat), parseFloat(trackedRide.pickupLng)] as [number, number] : mapPickup}
+            destinationCoords={isTracking && trackedRide?.destinationLat ? [parseFloat(trackedRide.destinationLat), parseFloat(trackedRide.destinationLng)] as [number, number] : mapDest}
             midwayStops={midwayStops.filter(s => s.coords).map(s => [s.coords!.lat, s.coords!.lng] as [number, number])}
+            activeRiderCoords={isTracking && trackedRide?.riderLat ? [parseFloat(trackedRide.riderLat), parseFloat(trackedRide.riderLng)] as [number, number] : undefined}
             onMapClick={handleMapClick}
             activeInput={activeInput}
           />
 
+          {/* Rider live badge during tracking */}
+          {isTracking && trackedRide?.riderLat && (
+            <div className="absolute top-5 left-5 z-[500] bg-slate-900/90 backdrop-blur-md text-white px-4 py-3 rounded-2xl border border-white/10 shadow-2xl">
+              <div className="flex items-center gap-2.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse flex-shrink-0" />
+                <div>
+                  <p className="font-bold text-xs">
+                    {trackedRide.status === 'accepted' ? 'Rider heading to you' : 'En route to destination'}
+                  </p>
+                  <p className="text-[10px] text-slate-400">Live location · updates every 8s</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Floating summary card when estimate ready */}
-          {estimate && (
+          {estimate && !isTracking && (
             <div className="absolute top-5 right-5 z-[500] glass px-5 py-4 rounded-2xl border border-white/20 shadow-2xl animate-in fade-in zoom-in-95 duration-300 pointer-events-none">
               <div className="flex items-center gap-5">
                 <div className="text-center">

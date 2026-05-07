@@ -60,8 +60,8 @@ export const GET_RIDE_HISTORY = gql`
           plateNumber
         }
       }
-      }
     }
+  }
 `;
 
 export const GET_RIDER_STATS = gql`
@@ -79,6 +79,144 @@ export const GET_RIDER_STATS = gql`
         trips
         onlineHours
       }
+    }
+  }
+`;
+
+export const GET_PENDING_RIDE_REQUESTS = gql`
+  query GetPendingRideRequests($riderLat: Float!, $riderLng: Float!) {
+    pendingRideRequests(riderLat: $riderLat, riderLng: $riderLng) {
+      id
+      pickupAddress
+      destinationAddress
+      pickupLat
+      pickupLng
+      destinationLat
+      destinationLng
+      totalFare
+      baseFare
+      rideType
+      requestedAt
+      status
+      client {
+        id
+        fullName
+        phone
+        rating
+      }
+    }
+  }
+`;
+
+export const GET_ACTIVE_RIDE_FOR_RIDER = gql`
+  query GetActiveRideForRider {
+    myAcceptedRide {
+      id
+      pickupAddress
+      destinationAddress
+      pickupLat
+      pickupLng
+      destinationLat
+      destinationLng
+      totalFare
+      status
+      rideType
+      requestedAt
+      client {
+        id
+        fullName
+        phone
+        rating
+      }
+    }
+  }
+`;
+
+export const GET_MY_ACTIVE_REQUEST = gql`
+  query GetMyActiveRequest {
+    myActiveRequest {
+      id
+      status
+      pickupAddress
+      destinationAddress
+      pickupLat
+      pickupLng
+      destinationLat
+      destinationLng
+      totalFare
+      rideType
+      requestedAt
+      riderLat
+      riderLng
+      riderLocationUpdatedAt
+      rider {
+        id
+        fullName
+        phone
+        rating
+        plateNumber
+        licenseNumber
+      }
+    }
+  }
+`;
+
+export const ACCEPT_RIDE = gql`
+  mutation AcceptRide($rideId: Int!) {
+    acceptRide(rideId: $rideId) {
+      success
+      message
+      ride {
+        id
+        status
+        pickupLat
+        pickupLng
+        destinationLat
+        destinationLng
+        pickupAddress
+        destinationAddress
+        totalFare
+        client {
+          fullName
+          phone
+          rating
+        }
+      }
+    }
+  }
+`;
+
+export const START_RIDE = gql`
+  mutation StartRide($rideId: Int!) {
+    startRide(rideId: $rideId) {
+      success
+      message
+      ride {
+        id
+        status
+      }
+    }
+  }
+`;
+
+export const COMPLETE_RIDE = gql`
+  mutation CompleteRide($rideId: Int!) {
+    completeRide(rideId: $rideId) {
+      success
+      message
+      ride {
+        id
+        status
+        finalFare
+      }
+    }
+  }
+`;
+
+export const UPDATE_RIDER_LOCATION = gql`
+  mutation UpdateRiderLocation($rideId: Int!, $lat: Float!, $lng: Float!) {
+    updateRiderLocation(rideId: $rideId, lat: $lat, lng: $lng) {
+      success
     }
   }
 `;

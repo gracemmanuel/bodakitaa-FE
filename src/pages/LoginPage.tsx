@@ -94,16 +94,32 @@ const LoginPage: React.FC = () => {
           }
         }
       `;
+      // 2. Fetch user profile
       const meData = await graphqlClient(meQuery);
-      const user = meData.me;
+      const user = meData?.me;
+      
+      if (!user) {
+        throw new Error('Could not retrieve user profile');
+      }
+
       localStorage.setItem('user', JSON.stringify(user));
       
-      if (user.role === 'admin') navigate('/dashboard/admin');
-      else if (user.role === 'owner') navigate('/dashboard/owner');
-      else if (user.role === 'rider') navigate('/dashboard/rider');
-      else navigate('/dashboard/client');
+      // 3. Role-based redirection (Case-insensitive)
+      const role = user.role?.toLowerCase();
+      
+      if (role === 'admin') {
+        navigate('/dashboard/admin');
+      } else if (role === 'owner') {
+        navigate('/dashboard/owner');
+      } else if (role === 'rider') {
+        navigate('/dashboard/rider');
+      } else {
+        // Default to client for any other role (including 'client')
+        navigate('/dashboard/client');
+      }
     } catch (err: any) {
-      setError(err.message || "Failed to login");
+      console.error("Login process error:", err);
+      setError(err.message || 'Login failed. Please check your credentials.');
     } finally {
       setIsLoading(false);
     }

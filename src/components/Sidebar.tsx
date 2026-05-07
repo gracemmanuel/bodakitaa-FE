@@ -24,6 +24,7 @@ const Sidebar: React.FC<SidebarProps> = ({ role, closeSidebar }) => {
     ],
     rider: [
       { path: '/dashboard/rider', icon: LayoutDashboard, label: t('dashboard.overview') },
+      { path: '/dashboard/rider/requests', icon: MapPin, label: 'My Requests' },
       { path: '/dashboard/rider/rides', icon: ClipboardList, label: t('dashboard.rides') },
       { path: '/dashboard/rider/wallet', icon: Wallet, label: t('dashboard.wallet') },
     ],

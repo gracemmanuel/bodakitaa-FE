@@ -7,6 +7,7 @@ import ClientDashboard from './pages/ClientDashboard';
 import ClientRidesPage from './pages/ClientRidesPage';
 import RequestRidePage from './pages/RequestRidePage';
 import RiderDashboard from './pages/RiderDashboard';
+import RiderRequestsPage from './pages/RiderRequestsPage';
 import OwnerDashboard from './pages/OwnerDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import './App.css';
@@ -27,6 +28,7 @@ function App() {
             <Route path="/dashboard/client/rides" element={<ClientRidesPage />} />
             <Route path="/dashboard/client/request" element={<RequestRidePage />} />
             <Route path="/dashboard/rider" element={<RiderDashboard />} />
+            <Route path="/dashboard/rider/requests" element={<RiderRequestsPage />} />
             <Route path="/dashboard/owner" element={<OwnerDashboard />} />
             <Route path="/dashboard/admin" element={<AdminDashboard />} />
             

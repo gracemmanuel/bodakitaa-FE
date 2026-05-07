@@ -107,6 +107,7 @@ interface MapComponentProps {
   pickupCoords?: [number, number]; // [lat, lng]
   destinationCoords?: [number, number];
   midwayStops?: [number, number][];
+  activeRiderCoords?: [number, number]; // LIVE position of the rider
   className?: string;
   onMapClick?: (lat: number, lng: number, type: 'pickup' | 'destination' | number) => void;
   activeInput?: 'pickup' | 'destination' | number;
@@ -116,6 +117,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
   pickupCoords,
   destinationCoords,
   midwayStops,
+  activeRiderCoords,
   className,
   onMapClick,
   activeInput,
@@ -128,6 +130,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
   const riderMarkersRef = useRef<L.Marker[]>([]);
   const userMarkerRef = useRef<L.Marker | null>(null);
   const midwayMarkersRef = useRef<L.Marker[]>([]);
+  const activeRiderMarkerRef = useRef<L.Marker | null>(null);
 
   // --- Initialize Map ---
   useEffect(() => {
@@ -306,6 +309,27 @@ const MapComponent: React.FC<MapComponentProps> = ({
     drawRoute();
   }, [destinationCoords]);
 
+  // --- Update Active Rider Marker ---
+  useEffect(() => {
+    if (!mapRef.current) return;
+    
+    if (activeRiderMarkerRef.current) {
+      activeRiderMarkerRef.current.remove();
+      activeRiderMarkerRef.current = null;
+    }
+
+    if (activeRiderCoords) {
+      activeRiderMarkerRef.current = L.marker(activeRiderCoords, { icon: riderIcon })
+        .addTo(mapRef.current)
+        .bindPopup('<b>Your Rider</b>');
+      
+      // If we only have pickup and rider, fit to them
+      if (pickupCoords && !destinationCoords) {
+         mapRef.current.fitBounds([activeRiderCoords, pickupCoords], { padding: [100, 100] });
+      }
+    }
+  }, [activeRiderCoords, pickupCoords, destinationCoords]);
+
   // --- Update Midway Markers ---
   useEffect(() => {
     if (!mapRef.current) return;
@@ -400,6 +424,10 @@ const MapComponent: React.FC<MapComponentProps> = ({
         @keyframes pulse {
           0%, 100% { box-shadow: 0 0 0 0 rgba(254,119,67,0.4); }
           50% { box-shadow: 0 0 0 10px rgba(254,119,67,0); }
+        }
+        @keyframes leaflet-ping {
+          0% { transform: scale(1); opacity: 1; }
+          100% { transform: scale(3); opacity: 0; }
         }
       `}</style>
 
