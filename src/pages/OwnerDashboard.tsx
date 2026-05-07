@@ -1,55 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Bike, Users, TrendingUp, DollarSign, Plus, Settings2,
   Search, Filter, MoreHorizontal, AlertTriangle, CheckCircle,
-  Clock, Activity, MapPin, Wrench, FileText, Download, ChevronRight, ChevronDown, Star
+  Clock, Activity, MapPin, Wrench, FileText, Download, ChevronRight, ChevronDown, Star, X
 } from 'lucide-react';
 import CombinedNav from '../components/CombinedNav';
 import { getTimeBasedGreeting } from '../utils/greeting';
+import { graphqlClient } from '../api';
 
 // --- Types ---
 interface BikeData {
   id: string;
-  model: string;
-  plate: string;
+  modelName: string;
+  plateNumber: string;
   year: number;
-  assignedRider: string | null;
-  status: 'Active' | 'Inactive' | 'Maintenance';
+  assignedRider: { fullName: string } | null;
+  status: string;
   todayEarnings: number;
   targetEarnings: number;
-  maintenanceStatus: 'Good' | 'Due Soon' | 'Overdue';
-  lastService: string;
+  maintenanceStatus: string;
 }
-
-interface RiderData {
-  id: string;
-  name: string;
-  phone: string;
-  rating: number;
-  assignedBike: string | null;
-  status: 'Online' | 'Offline' | 'On Trip';
-  todayEarnings: number;
-  tripsToday: number;
-}
-
-// --- Dummy Data ---
-const mockBikes: BikeData[] = [
-  { id: 'BK-001', model: 'TVS HLX 150', plate: 'MC 123 ABC', year: 2023, assignedRider: 'Juma Ali', status: 'Active', todayEarnings: 35000, targetEarnings: 30000, maintenanceStatus: 'Good', lastService: '2026-04-01' },
-  { id: 'BK-002', model: 'Boxer BM 150', plate: 'MC 456 DEF', year: 2022, assignedRider: null, status: 'Inactive', todayEarnings: 0, targetEarnings: 30000, maintenanceStatus: 'Due Soon', lastService: '2026-02-15' },
-  { id: 'BK-003', model: 'Honda Ace 110', plate: 'MC 789 GHI', year: 2024, assignedRider: 'Kassim H.', status: 'Active', todayEarnings: 42000, targetEarnings: 35000, maintenanceStatus: 'Good', lastService: '2026-04-10' },
-  { id: 'BK-004', model: 'SanLG SL150', plate: 'MC 321 JKL', year: 2021, assignedRider: null, status: 'Maintenance', todayEarnings: 0, targetEarnings: 25000, maintenanceStatus: 'Overdue', lastService: '2025-11-20' },
-  { id: 'BK-005', model: 'Yamaha Crux Rev', plate: 'MC 654 MNO', year: 2023, assignedRider: 'Baraka M.', status: 'Active', todayEarnings: 28000, targetEarnings: 35000, maintenanceStatus: 'Good', lastService: '2026-03-05' },
-  { id: 'BK-006', model: 'TVS HLX 125', plate: 'MC 987 PQR', year: 2022, assignedRider: 'Ali Said', status: 'Active', todayEarnings: 15000, targetEarnings: 25000, maintenanceStatus: 'Due Soon', lastService: '2026-01-10' },
-];
-
-const mockRiders: RiderData[] = [
-  { id: 'RD-01', name: 'Juma Ali', phone: '0712345678', rating: 4.8, assignedBike: 'BK-001', status: 'On Trip', todayEarnings: 35000, tripsToday: 12 },
-  { id: 'RD-02', name: 'Kassim H.', phone: '0754123987', rating: 4.5, assignedBike: 'BK-003', status: 'Online', todayEarnings: 42000, tripsToday: 15 },
-  { id: 'RD-03', name: 'Baraka M.', phone: '0789456123', rating: 4.9, assignedBike: 'BK-005', status: 'Offline', todayEarnings: 28000, tripsToday: 8 },
-  { id: 'RD-04', name: 'Ali Said', phone: '0733999888', rating: 4.2, assignedBike: 'BK-006', status: 'Online', todayEarnings: 15000, tripsToday: 5 },
-  { id: 'RD-05', name: 'Rashid J.', phone: '0722333444', rating: 4.7, assignedBike: null, status: 'Offline', todayEarnings: 0, tripsToday: 0 },
-];
 
 // --- Sub-Components ---
 
@@ -88,24 +59,18 @@ const RevenueChartPlaceholder: React.FC = () => (
       </div>
     </div>
 
-    {/* CSS Grid based Bar Chart Mockup */}
     <div className="flex-1 flex items-end gap-2 sm:gap-4 mt-auto pt-8">
       {[40, 70, 45, 90, 60, 100, 85].map((val, i) => (
         <div key={i} className="flex-1 flex flex-col justify-end items-center gap-2 relative group h-[200px]">
-          {/* Target Line / Background bar */}
           <div className="w-full max-w-[40px] bg-slate-100 dark:bg-white/5 rounded-t-lg absolute bottom-0 h-[80%]" />
-
-          {/* Actual Bar */}
           <div
             className="w-full max-w-[40px] bg-gradient-to-t from-primary-dark to-primary-light rounded-t-lg relative z-10 transition-all duration-500 group-hover:opacity-80"
             style={{ height: `${val}%` }}
           >
-            {/* Tooltip */}
             <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-20">
               TZS {val * 1000}
             </div>
           </div>
-
           <span className="text-xs font-bold text-slate-400 dark:text-slate-500 mt-2 block w-full text-center">
             {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i]}
           </span>
@@ -115,17 +80,119 @@ const RevenueChartPlaceholder: React.FC = () => (
   </div>
 );
 
-const BikeManagementTable: React.FC = () => {
+interface AddBikeModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+const AddBikeModal: React.FC<AddBikeModalProps> = ({ isOpen, onClose, onSuccess }) => {
+  const [make, setMake] = useState('');
+  const [modelName, setModelName] = useState('');
+  const [year, setYear] = useState('');
+  const [plateNumber, setPlateNumber] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  if (!isOpen) return null;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+
+    const mutation = `
+      mutation CreateVehicle($make: String!, $modelName: String!, $year: Int!, $plateNumber: String!) {
+        createVehicle(make: $make, modelName: $modelName, year: $year, plateNumber: $plateNumber) {
+          success
+          message
+        }
+      }
+    `;
+
+    try {
+      const data = await graphqlClient(mutation, {
+        make,
+        modelName,
+        year: parseInt(year),
+        plateNumber
+      });
+
+      if (data.createVehicle.success) {
+        onSuccess();
+        onClose();
+        setMake(''); setModelName(''); setYear(''); setPlateNumber('');
+      } else {
+        setError(data.createVehicle.message);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to register bike');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-300">
+        <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900">
+          <h3 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <Bike className="text-primary-light" /> Register New Bike
+          </h3>
+          <button onClick={onClose} className="p-2 bg-slate-200 dark:bg-slate-800 rounded-full text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors">
+            <X size={20} />
+          </button>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {error && (
+            <div className="p-3 bg-red-50 dark:bg-red-500/10 text-red-600 text-sm font-bold rounded-xl flex items-center gap-2">
+              <AlertTriangle size={16} /> {error}
+            </div>
+          )}
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-500 uppercase">Make</label>
+              <input type="text" required value={make} onChange={e => setMake(e.target.value)} placeholder="e.g. TVS" className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 focus:border-primary-light focus:outline-none transition-colors text-slate-900 dark:text-white" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-500 uppercase">Model</label>
+              <input type="text" required value={modelName} onChange={e => setModelName(e.target.value)} placeholder="e.g. HLX 150" className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 focus:border-primary-light focus:outline-none transition-colors text-slate-900 dark:text-white" />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-500 uppercase">Year</label>
+              <input type="number" required value={year} onChange={e => setYear(e.target.value)} placeholder="2023" className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 focus:border-primary-light focus:outline-none transition-colors text-slate-900 dark:text-white" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-500 uppercase">Plate Number</label>
+              <input type="text" required value={plateNumber} onChange={e => setPlateNumber(e.target.value)} placeholder="MC 123 ABC" className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 focus:border-primary-light focus:outline-none transition-colors text-slate-900 dark:text-white" />
+            </div>
+          </div>
+
+          <button type="submit" disabled={isLoading} className="w-full py-4 mt-6 bg-primary-light hover:bg-primary-dark text-white font-black rounded-xl shadow-lg shadow-primary-light/30 transition-all flex justify-center items-center gap-2">
+            {isLoading ? 'Registering...' : <><Plus size={20} /> Add Vehicle</>}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+const BikeManagementTable: React.FC<{ bikes: BikeData[], onAddBike: () => void }> = ({ bikes, onAddBike }) => {
   const [activeTab, setActiveTab] = useState<'all' | 'active' | 'maintenance'>('all');
 
-  const filteredBikes = mockBikes.filter(b => {
-    if (activeTab === 'active') return b.status === 'Active';
-    if (activeTab === 'maintenance') return b.status === 'Maintenance' || b.maintenanceStatus === 'Due Soon' || b.maintenanceStatus === 'Overdue';
+  const filteredBikes = bikes.filter(b => {
+    if (activeTab === 'active') return b.status.toLowerCase() === 'active';
+    if (activeTab === 'maintenance') return b.status.toLowerCase() === 'maintenance' || b.maintenanceStatus === 'Overdue';
     return true;
   });
 
   return (
-    <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl overflow-hidden flex flex-col">
+    <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl overflow-hidden flex flex-col relative min-h-[400px]">
       <div className="p-6 border-b border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-transparent">
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
           <div>
@@ -138,21 +205,17 @@ const BikeManagementTable: React.FC = () => {
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input type="text" placeholder="Search by plate or model..." className="pl-9 pr-4 py-2 bg-white dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:border-primary-light w-full lg:w-64 transition-colors" />
             </div>
-            <button className="px-4 py-2 rounded-xl border border-slate-200 dark:border-white/10 flex items-center gap-2 text-sm font-bold bg-white dark:bg-black/50 hover:bg-slate-50 dark:hover:bg-white/5 whitespace-nowrap">
-              <Filter size={16} /> Filter
-            </button>
-            <button className="px-4 py-2 rounded-xl bg-primary-light text-white flex items-center gap-2 text-sm font-bold hover:bg-primary-dark transition-colors whitespace-nowrap">
+            <button className="px-4 py-2 rounded-xl bg-primary-light text-white flex items-center gap-2 text-sm font-bold hover:bg-primary-dark transition-colors whitespace-nowrap" onClick={onAddBike}>
               <Plus size={16} /> Add Bike
             </button>
           </div>
         </div>
 
-        {/* Tabs */}
         <div className="flex gap-6 border-b border-slate-200 dark:border-white/10">
           {[
-            { id: 'all', label: 'All Bikes', count: mockBikes.length },
-            { id: 'active', label: 'Active on Road', count: mockBikes.filter(b => b.status === 'Active').length },
-            { id: 'maintenance', label: 'Needs Attention', count: mockBikes.filter(b => b.status === 'Maintenance' || b.maintenanceStatus === 'Overdue').length }
+            { id: 'all', label: 'All Bikes', count: bikes.length },
+            { id: 'active', label: 'Active on Road', count: bikes.filter(b => b.status.toLowerCase() === 'active').length },
+            { id: 'maintenance', label: 'Needs Attention', count: bikes.filter(b => b.status.toLowerCase() === 'maintenance' || b.maintenanceStatus === 'Overdue').length }
           ].map(tab => (
             <button
               key={tab.id}
@@ -166,7 +229,7 @@ const BikeManagementTable: React.FC = () => {
         </div>
       </div>
 
-      <div className="overflow-x-auto custom-scrollbar">
+      <div className="overflow-x-auto custom-scrollbar flex-1">
         <table className="w-full text-left border-collapse min-w-[1000px]">
           <thead className="bg-slate-50 dark:bg-white/5">
             <tr>
@@ -187,8 +250,8 @@ const BikeManagementTable: React.FC = () => {
                       <Bike size={24} />
                     </div>
                     <div>
-                      <p className="font-black text-slate-900 dark:text-white text-sm">{bike.plate}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{bike.model} • {bike.year}</p>
+                      <p className="font-black text-slate-900 dark:text-white text-sm">{bike.plateNumber}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{bike.modelName} • {bike.year}</p>
                       <p className="text-[10px] font-mono text-slate-400 mt-1 uppercase">ID: {bike.id}</p>
                     </div>
                   </div>
@@ -198,10 +261,10 @@ const BikeManagementTable: React.FC = () => {
                   {bike.assignedRider ? (
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-primary-light/20 text-primary-light flex items-center justify-center font-bold text-xs">
-                        {bike.assignedRider.charAt(0)}
+                        {bike.assignedRider.fullName.charAt(0)}
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-slate-900 dark:text-white">{bike.assignedRider}</p>
+                        <p className="text-sm font-bold text-slate-900 dark:text-white">{bike.assignedRider.fullName}</p>
                         <button className="text-[10px] font-bold text-primary-light hover:underline uppercase mt-0.5">Change Assignment</button>
                       </div>
                     </div>
@@ -213,14 +276,14 @@ const BikeManagementTable: React.FC = () => {
                 </td>
 
                 <td className="px-6 py-4">
-                  <p className="text-sm font-black text-slate-900 dark:text-white">TZS {bike.todayEarnings.toLocaleString()}</p>
+                  <p className="text-sm font-black text-slate-900 dark:text-white">TZS {(bike.todayEarnings || 0).toLocaleString()}</p>
                   <div className="w-full max-w-[120px] h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full mt-2 overflow-hidden flex">
                     <div
-                      className={`h-full ${bike.todayEarnings >= bike.targetEarnings ? 'bg-green-500' : 'bg-primary-light'}`}
-                      style={{ width: `${Math.min(100, (bike.todayEarnings / bike.targetEarnings) * 100)}%` }}
+                      className={`h-full ${(bike.todayEarnings || 0) >= (bike.targetEarnings || 30000) ? 'bg-green-500' : 'bg-primary-light'}`}
+                      style={{ width: `${Math.min(100, ((bike.todayEarnings || 0) / (bike.targetEarnings || 30000)) * 100)}%` }}
                     />
                   </div>
-                  <p className="text-[10px] font-bold text-slate-500 mt-1">Target: TZS {bike.targetEarnings.toLocaleString()}</p>
+                  <p className="text-[10px] font-bold text-slate-500 mt-1">Target: TZS {(bike.targetEarnings || 30000).toLocaleString()}</p>
                 </td>
 
                 <td className="px-6 py-4">
@@ -228,14 +291,13 @@ const BikeManagementTable: React.FC = () => {
                       bike.maintenanceStatus === 'Overdue' ? 'bg-red-500/10 text-red-600 dark:text-red-400' :
                         'bg-amber-500/10 text-amber-600 dark:text-amber-400'
                     }`}>
-                    <Wrench size={12} /> {bike.maintenanceStatus}
+                    <Wrench size={12} /> {bike.maintenanceStatus || 'Good'}
                   </div>
-                  <p className="text-[10px] text-slate-500 mt-1.5">Last: {bike.lastService}</p>
                 </td>
 
                 <td className="px-6 py-4">
-                  <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${bike.status === 'Active' ? 'bg-green-500/20 text-green-700 dark:text-green-400 border border-green-500/30' :
-                      bike.status === 'Maintenance' ? 'bg-red-500/20 text-red-700 dark:text-red-400 border border-red-500/30' :
+                  <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${bike.status.toLowerCase() === 'active' ? 'bg-green-500/20 text-green-700 dark:text-green-400 border border-green-500/30' :
+                      bike.status.toLowerCase() === 'maintenance' ? 'bg-red-500/20 text-red-700 dark:text-red-400 border border-red-500/30' :
                         'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600'
                     }`}>
                     {bike.status}
@@ -251,14 +313,14 @@ const BikeManagementTable: React.FC = () => {
             ))}
           </tbody>
         </table>
+        
+        {filteredBikes.length === 0 && (
+          <div className="absolute inset-0 top-[140px] flex flex-col items-center justify-center bg-slate-50/50 dark:bg-black/50 backdrop-blur-sm">
+            <Bike size={48} className="text-slate-300 dark:text-slate-700 mb-4" />
+            <p className="text-lg font-bold text-slate-500">No bikes found in this category.</p>
+          </div>
+        )}
       </div>
-
-      {filteredBikes.length === 0 && (
-        <div className="p-12 text-center flex flex-col items-center">
-          <Bike size={48} className="text-slate-300 dark:text-slate-700 mb-4" />
-          <p className="text-lg font-bold text-slate-500">No bikes found in this category.</p>
-        </div>
-      )}
     </div>
   );
 };
@@ -267,15 +329,48 @@ const BikeManagementTable: React.FC = () => {
 const OwnerDashboard: React.FC = () => {
   const { t } = useTranslation();
   const [user, setUser] = useState<any>(null);
+  const [bikes, setBikes] = useState<BikeData[]>([]);
+  const [isAddBikeOpen, setIsAddBikeOpen] = useState(false);
 
-  React.useEffect(() => {
+  const fetchDashboardData = async () => {
+    try {
+      const query = `
+        query {
+          myFleet {
+            id
+            modelName
+            plateNumber
+            year
+            status
+            todayEarnings
+            targetEarnings
+            maintenanceStatus
+            assignedRider {
+              fullName
+            }
+          }
+        }
+      `;
+      const data = await graphqlClient(query);
+      if (data && data.myFleet) {
+        setBikes(data.myFleet);
+      }
+    } catch (err) {
+      console.error("Failed to fetch fleet:", err);
+    }
+  };
+
+  useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
     setUser(storedUser);
+    fetchDashboardData();
   }, []);
+
+  const activeCount = bikes.filter(b => b.status.toLowerCase() === 'active').length;
 
   return (
     <CombinedNav role="owner">
-      <div className="max-w-7xl mx-auto space-y-8 w-full">
+      <div className="max-w-7xl mx-auto space-y-8 w-full pb-12">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
           <div>
@@ -283,14 +378,14 @@ const OwnerDashboard: React.FC = () => {
               {getTimeBasedGreeting()}, <span className="text-primary-light">{user?.fullName || user?.full_name || 'Owner'}</span>
             </h1>
             <p className="text-slate-600 dark:text-slate-400 mt-2 font-medium">
-              You have <span className="font-bold text-primary-light">6 bikes</span> registered. 4 are currently active on the road.
+              You have <span className="font-bold text-primary-light">{bikes.length} bikes</span> registered. {activeCount} are currently active on the road.
             </p>
           </div>
           <div className="flex gap-3">
             <button className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 font-bold bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 transition-colors flex items-center gap-2">
               <FileText size={18} /> Reports
             </button>
-            <button className="premium-btn bg-primary-light text-white shadow-xl flex items-center gap-2 px-6">
+            <button onClick={() => setIsAddBikeOpen(true)} className="premium-btn bg-primary-light text-white shadow-xl flex items-center gap-2 px-6">
               <Plus size={18} /> Register Bike
             </button>
           </div>
@@ -298,16 +393,16 @@ const OwnerDashboard: React.FC = () => {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard title="Total Fleet Revenue" value="TZS 120k" icon={DollarSign} color="text-green-500" trend={{ value: 8.5, isUp: true }} subtitle="Today's collections" />
-          <StatCard title="Active Bikes" value="4 / 6" icon={Bike} color="text-primary-light" subtitle="2 Inactive/Maintenance" />
-          <StatCard title="Active Riders" value="4 / 5" icon={Users} color="text-blue-500" subtitle="1 Unassigned" />
-          <StatCard title="Avg Rating" value="4.6" icon={Star} color="text-amber-500" trend={{ value: 2.1, isUp: false }} subtitle="Across fleet" />
+          <StatCard title="Total Fleet Revenue" value="TZS 0" icon={DollarSign} color="text-green-500" trend={{ value: 0, isUp: true }} subtitle="Today's collections" />
+          <StatCard title="Active Bikes" value={`${activeCount} / ${bikes.length}`} icon={Bike} color="text-primary-light" subtitle={`${bikes.length - activeCount} Inactive/Maintenance`} />
+          <StatCard title="Active Riders" value="0" icon={Users} color="text-blue-500" subtitle="0 Unassigned" />
+          <StatCard title="Avg Rating" value="0.0" icon={Star} color="text-amber-500" subtitle="Across fleet" />
         </div>
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
           <div className="xl:col-span-2">
-            <BikeManagementTable />
+            <BikeManagementTable bikes={bikes} onAddBike={() => setIsAddBikeOpen(true)} />
           </div>
 
           <div className="xl:col-span-1 space-y-8">
@@ -324,23 +419,21 @@ const OwnerDashboard: React.FC = () => {
               <div className="space-y-4">
                 <div className="bg-white dark:bg-black/50 p-4 rounded-2xl flex justify-between items-center shadow-sm">
                   <div>
-                    <p className="font-bold text-sm text-slate-900 dark:text-white">MC 321 JKL</p>
-                    <p className="text-xs text-slate-500">Service Overdue by 5 days</p>
+                    <p className="font-bold text-sm text-slate-900 dark:text-white">No alerts</p>
+                    <p className="text-xs text-slate-500">Your fleet is running smoothly</p>
                   </div>
-                  <button className="text-xs font-bold text-red-500 hover:underline">Schedule</button>
-                </div>
-                <div className="bg-white dark:bg-black/50 p-4 rounded-2xl flex justify-between items-center shadow-sm">
-                  <div>
-                    <p className="font-bold text-sm text-slate-900 dark:text-white">Rashid J.</p>
-                    <p className="text-xs text-slate-500">Rider inactive for 3 days</p>
-                  </div>
-                  <button className="text-xs font-bold text-slate-900 dark:text-white hover:underline">Contact</button>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+      
+      <AddBikeModal 
+        isOpen={isAddBikeOpen} 
+        onClose={() => setIsAddBikeOpen(false)} 
+        onSuccess={() => { fetchDashboardData(); }}
+      />
     </CombinedNav>
   );
 };

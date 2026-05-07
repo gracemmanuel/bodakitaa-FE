@@ -268,16 +268,7 @@ const LoginPage: React.FC = () => {
               </button>
             </form>
 
-            <div className="mt-10 flex items-center justify-center gap-4 before:h-px before:flex-1 before:bg-slate-200 dark:before:bg-slate-800 after:h-px after:flex-1 after:bg-slate-200 dark:after:bg-slate-800">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Demo Access</span>
-            </div>
 
-            <div className="mt-6 grid grid-cols-2 gap-3 text-xs font-medium text-slate-500">
-              <div className="bg-slate-50 dark:bg-white/5 p-3 rounded-xl border border-slate-100 dark:border-white/5 text-center cursor-pointer hover:border-primary-light transition-colors" onClick={() => { setEmail('admin@demo.com'); setPassword('password'); }}>Admin</div>
-              <div className="bg-slate-50 dark:bg-white/5 p-3 rounded-xl border border-slate-100 dark:border-white/5 text-center cursor-pointer hover:border-primary-light transition-colors" onClick={() => { setEmail('owner@demo.com'); setPassword('password'); }}>Owner</div>
-              <div className="bg-slate-50 dark:bg-white/5 p-3 rounded-xl border border-slate-100 dark:border-white/5 text-center cursor-pointer hover:border-primary-light transition-colors" onClick={() => { setEmail('rider@demo.com'); setPassword('password'); }}>Rider</div>
-              <div className="bg-slate-50 dark:bg-white/5 p-3 rounded-xl border border-slate-100 dark:border-white/5 text-center cursor-pointer hover:border-primary-light transition-colors" onClick={() => { setEmail('client@demo.com'); setPassword('password'); }}>Client</div>
-            </div>
           </div>
 
           {/* Right Side: Graphic/Feature Display (Hidden on mobile) */}
