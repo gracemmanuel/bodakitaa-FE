@@ -7,8 +7,8 @@ import {
   MapPin, Clock, Smartphone, Globe, ChevronDown, PhoneCall, Mail,
   Instagram, Twitter, Facebook, ArrowUpRight, Activity, Award
 } from 'lucide-react';
-import Nav from '../components/Nav';
-import bodasImage from '../assets/bodas.jpeg';
+import Nav from '../../components/Nav';
+import bodasImage from '../../assets/bodas.jpeg';
 
 gsap.registerPlugin(ScrollTrigger);
 

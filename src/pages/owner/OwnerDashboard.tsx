@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from '@apollo/client/react';
 import {
   Bike, Users, TrendingUp, DollarSign, Plus, Settings2,
   Search, Filter, MoreHorizontal, AlertTriangle, CheckCircle,
   Clock, Activity, MapPin, Wrench, FileText, Download, ChevronRight, ChevronDown, Star, X
 } from 'lucide-react';
-import CombinedNav from '../components/CombinedNav';
-import { getTimeBasedGreeting } from '../utils/greeting';
-import { graphqlClient } from '../api';
+import CombinedNav from '../../components/CombinedNav';
+import { getTimeBasedGreeting } from '../../utils/greeting';
+import { graphqlClient } from '../../api';
+import { GET_OWNER_STATS } from '../../api/queries';
 
 // --- Types ---
 interface BikeData {
@@ -46,39 +48,41 @@ const StatCard: React.FC<{ title: string; value: string | number; icon: React.El
   </div>
 );
 
-const RevenueChartPlaceholder: React.FC = () => (
-  <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl p-6 h-full flex flex-col">
-    <div className="flex justify-between items-center mb-6">
-      <div>
-        <h3 className="text-xl font-black text-slate-900 dark:text-white">Revenue vs Target</h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400">Past 7 days performance</p>
-      </div>
-      <div className="flex gap-2">
-        <span className="flex items-center gap-1 text-xs font-bold text-slate-500"><div className="w-3 h-3 rounded-full bg-primary-light" /> Actual</span>
-        <span className="flex items-center gap-1 text-xs font-bold text-slate-500"><div className="w-3 h-3 rounded-full bg-slate-200 dark:bg-slate-700" /> Target</span>
-      </div>
-    </div>
-
-    <div className="flex-1 flex items-end gap-2 sm:gap-4 mt-auto pt-8">
-      {[40, 70, 45, 90, 60, 100, 85].map((val, i) => (
-        <div key={i} className="flex-1 flex flex-col justify-end items-center gap-2 relative group h-[200px]">
-          <div className="w-full max-w-[40px] bg-slate-100 dark:bg-white/5 rounded-t-lg absolute bottom-0 h-[80%]" />
-          <div
-            className="w-full max-w-[40px] bg-gradient-to-t from-primary-dark to-primary-light rounded-t-lg relative z-10 transition-all duration-500 group-hover:opacity-80"
-            style={{ height: `${val}%` }}
-          >
-            <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-20">
-              TZS {val * 1000}
-            </div>
-          </div>
-          <span className="text-xs font-bold text-slate-400 dark:text-slate-500 mt-2 block w-full text-center">
-            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i]}
-          </span>
+const RevenueChartPlaceholder: React.FC<{ data: number[] }> = ({ data }) => {
+  const maxVal = Math.max(...data, 1000);
+  return (
+    <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-3xl p-6 h-full flex flex-col">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h3 className="text-xl font-black text-slate-900 dark:text-white">Revenue Analytics</h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Weekly performance</p>
         </div>
-      ))}
+        <div className="flex gap-2">
+          <span className="flex items-center gap-1 text-xs font-bold text-slate-500"><div className="w-3 h-3 rounded-full bg-primary-light" /> Actual</span>
+        </div>
+      </div>
+
+      <div className="flex-1 flex items-end gap-2 sm:gap-4 mt-auto pt-8">
+        {data.map((val, i) => (
+          <div key={i} className="flex-1 flex flex-col justify-end items-center gap-2 relative group h-[200px]">
+            <div className="w-full max-w-[40px] bg-slate-100 dark:bg-white/5 rounded-t-lg absolute bottom-0 h-[100%]" />
+            <div
+              className="w-full max-w-[40px] bg-gradient-to-t from-primary-dark to-primary-light rounded-t-lg relative z-10 transition-all duration-700 group-hover:opacity-80"
+              style={{ height: `${(val / maxVal) * 100}%` }}
+            >
+              <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] font-black px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-20">
+                TZS {val.toLocaleString()}
+              </div>
+            </div>
+            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 mt-2 block w-full text-center uppercase">
+              {['M', 'T', 'W', 'T', 'F', 'S', 'S'][i]}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 interface AddBikeModalProps {
   isOpen: boolean;
@@ -332,6 +336,10 @@ const OwnerDashboard: React.FC = () => {
   const [bikes, setBikes] = useState<BikeData[]>([]);
   const [isAddBikeOpen, setIsAddBikeOpen] = useState(false);
 
+  const { data: statsData, loading: statsLoading, refetch: refetchStats } = useQuery(GET_OWNER_STATS, {
+    fetchPolicy: 'cache-and-network',
+  });
+
   const fetchDashboardData = async () => {
     try {
       const query = `
@@ -366,6 +374,7 @@ const OwnerDashboard: React.FC = () => {
     fetchDashboardData();
   }, []);
 
+  const stats = statsData?.ownerStats;
   const activeCount = bikes.filter(b => b.status.toLowerCase() === 'active').length;
 
   return (
@@ -393,10 +402,10 @@ const OwnerDashboard: React.FC = () => {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard title="Total Fleet Revenue" value="TZS 0" icon={DollarSign} color="text-green-500" trend={{ value: 0, isUp: true }} subtitle="Today's collections" />
-          <StatCard title="Active Bikes" value={`${activeCount} / ${bikes.length}`} icon={Bike} color="text-primary-light" subtitle={`${bikes.length - activeCount} Inactive/Maintenance`} />
-          <StatCard title="Active Riders" value="0" icon={Users} color="text-blue-500" subtitle="0 Unassigned" />
-          <StatCard title="Avg Rating" value="0.0" icon={Star} color="text-amber-500" subtitle="Across fleet" />
+          <StatCard title="Total Fleet Revenue" value={`TZS ${stats?.totalFleetRevenue?.toLocaleString() || '0'}`} icon={DollarSign} color="text-green-500" trend={{ value: 12, isUp: true }} subtitle="Today's collections" />
+          <StatCard title="Active Bikes" value={`${stats?.activeBikes || 0} / ${stats?.totalBikes || 0}`} icon={Bike} color="text-primary-light" subtitle={`${(stats?.totalBikes || 0) - (stats?.activeBikes || 0)} Inactive/Maintenance`} />
+          <StatCard title="Active Riders" value={`${stats?.activeRiders || 0}`} icon={Users} color="text-blue-500" subtitle="Assigned to vehicles" />
+          <StatCard title="Avg Rating" value={`${stats?.avgFleetRating || '0.0'}`} icon={Star} color="text-amber-500" subtitle="Across fleet" />
         </div>
 
         {/* Main Content Grid */}
@@ -407,7 +416,7 @@ const OwnerDashboard: React.FC = () => {
 
           <div className="xl:col-span-1 space-y-8">
             <div className="h-[400px]">
-              <RevenueChartPlaceholder />
+              <RevenueChartPlaceholder data={stats?.revenueData || [0, 0, 0, 0, 0, 0, 0]} />
             </div>
 
             {/* Quick Actions / Alerts */}
@@ -417,12 +426,22 @@ const OwnerDashboard: React.FC = () => {
                 <h3 className="text-lg font-black">Attention Required</h3>
               </div>
               <div className="space-y-4">
-                <div className="bg-white dark:bg-black/50 p-4 rounded-2xl flex justify-between items-center shadow-sm">
-                  <div>
-                    <p className="font-bold text-sm text-slate-900 dark:text-white">No alerts</p>
-                    <p className="text-xs text-slate-500">Your fleet is running smoothly</p>
+                {stats?.alertsCount && stats.alertsCount > 0 ? (
+                  <div className="bg-white dark:bg-black/50 p-4 rounded-2xl flex justify-between items-center shadow-sm">
+                    <div>
+                      <p className="font-bold text-sm text-slate-900 dark:text-white">{stats.alertsCount} Bikes need maintenance</p>
+                      <p className="text-xs text-slate-500">Check fleet garage for details</p>
+                    </div>
+                    <ChevronRight size={18} className="text-slate-400" />
                   </div>
-                </div>
+                ) : (
+                  <div className="bg-white dark:bg-black/50 p-4 rounded-2xl flex justify-between items-center shadow-sm">
+                    <div>
+                      <p className="font-bold text-sm text-slate-900 dark:text-white">No alerts</p>
+                      <p className="text-xs text-slate-500">Your fleet is running smoothly</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -432,7 +451,7 @@ const OwnerDashboard: React.FC = () => {
       <AddBikeModal 
         isOpen={isAddBikeOpen} 
         onClose={() => setIsAddBikeOpen(false)} 
-        onSuccess={() => { fetchDashboardData(); }}
+        onSuccess={() => { fetchDashboardData(); refetchStats(); }}
       />
     </CombinedNav>
   );

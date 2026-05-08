@@ -3,13 +3,14 @@ import {
   MapPin, Clock, Star, Navigation as NavigationIcon, Calendar,
   CreditCard, Search, Filter, MoreHorizontal,
   AlertCircle, CheckCircle2, Activity, Map as MapIcon,
-  PhoneCall, Smartphone, RefreshCcw, User, ChevronLeft, ChevronRight
+  PhoneCall, RefreshCcw, User, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { useQuery } from '@apollo/client/react';
 import { useNavigate } from 'react-router-dom';
-import CombinedNav from '../components/CombinedNav';
-import MapComponent from '../components/MapComponent';
-import { GET_RIDE_HISTORY, GET_CLIENT_STATS, GET_ME } from '../api/queries';
+import CombinedNav from '../../components/CombinedNav';
+import MapComponent from '../../components/MapComponent';
+import { GET_CLIENT_STATS, GET_MY_RIDES } from '../../api/queries';
+
 // --- Types ---
 interface RideHistory {
   id: string;
@@ -78,7 +79,7 @@ const ActiveRideCard: React.FC<{ ride: any }> = ({ ride }) => (
         Ride in Progress
       </div>
 
-      <h3 className="text-3xl font-black text-white mb-2 line-clamp-1">Heading to {ride.destination}</h3>
+      <h3 className="text-3xl font-black text-white mb-2 line-clamp-1">Heading to {ride.destinationAddress}</h3>
       <p className="text-slate-400 text-sm mb-8 flex items-center gap-2"><Clock size={16} /> Est. Arrival: {ride.estimatedArrival || 'Soon'}</p>
 
       <div className="space-y-6">
@@ -87,7 +88,7 @@ const ActiveRideCard: React.FC<{ ride: any }> = ({ ride }) => (
           <div className="w-6 h-6 rounded-full bg-slate-800 border-4 border-slate-600 z-10 flex-shrink-0 mt-1" />
           <div>
             <p className="text-xs text-slate-500 font-bold uppercase">Pickup</p>
-            <p className="text-white font-medium">{ride.pickup}</p>
+            <p className="text-white font-medium">{ride.pickupAddress}</p>
           </div>
         </div>
         <div className="flex gap-4 relative">
@@ -96,7 +97,7 @@ const ActiveRideCard: React.FC<{ ride: any }> = ({ ride }) => (
           </div>
           <div>
             <p className="text-xs text-primary-light font-bold uppercase">Destination</p>
-            <p className="text-white font-medium">{ride.destination}</p>
+            <p className="text-white font-medium">{ride.destinationAddress}</p>
           </div>
         </div>
       </div>
@@ -126,50 +127,21 @@ const ActiveRideCard: React.FC<{ ride: any }> = ({ ride }) => (
 const RideHistoryTable: React.FC<{ clientId?: string }> = () => {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
-  const [rides, setRides] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
   const PAGE_SIZE = 5;
 
-  React.useEffect(() => {
-    const fetchRides = async () => {
-      try {
-        const { graphqlClient } = await import('../api/index');
-        const query = `
-          query {
-            myRides {
-              id
-              pickupAddress
-              destinationAddress
-              status
-              baseFare
-              totalFare
-              finalFare
-              requestedAt
-              rider {
-                fullName
-              }
-            }
-          }
-        `;
-        const data = await graphqlClient(query);
-        setRides(data.myRides || []);
-      } catch (err) {
-        console.error("Failed to load rides:", err);
-        setError(true);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchRides();
-  }, []);
+  const { data: ridesData, loading: isRidesLoading, error: queryError } = useQuery(GET_MY_RIDES, {
+    fetchPolicy: 'network-only',
+  });
+  
+  const allRides = ridesData?.myRides || [];
+  const hasError = !!queryError;
 
   const filtered = search
-    ? rides.filter((r: any) =>
+    ? allRides.filter((r: any) =>
       r.pickupAddress.toLowerCase().includes(search.toLowerCase()) ||
       r.destinationAddress.toLowerCase().includes(search.toLowerCase())
     )
-    : rides;
+    : allRides;
 
   const total = filtered.length;
   const currentRides = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -180,7 +152,7 @@ const RideHistoryTable: React.FC<{ clientId?: string }> = () => {
       <div className="p-6 border-b border-slate-200 dark:border-white/10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-50 dark:bg-transparent">
         <div>
           <h3 className="text-xl font-black text-slate-900 dark:text-white">Ride History</h3>
-          <p className="text-sm text-slate-500">{loading ? '...' : `${total} total rides`}</p>
+          <p className="text-sm text-slate-500">{isRidesLoading ? '...' : `${total} total rides`}</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative">
@@ -198,11 +170,11 @@ const RideHistoryTable: React.FC<{ clientId?: string }> = () => {
       </div>
 
       <div className="flex-1 overflow-auto">
-        {loading ? (
+        {isRidesLoading ? (
           <div className="flex items-center justify-center h-full">
             <RefreshCcw size={28} className="animate-spin text-primary-light" />
           </div>
-        ) : error ? (
+        ) : hasError ? (
           <div className="flex flex-col items-center justify-center h-full gap-3 text-slate-500">
             <AlertCircle size={32} className="text-red-400" />
             <p className="font-semibold text-sm">Failed to load ride history</p>

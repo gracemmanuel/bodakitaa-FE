@@ -7,8 +7,11 @@ import {
   UserCheck, ArrowRight, CheckCircle2,
   Phone, MapPin, Upload, Building2, CreditCard, AlertCircle
 } from 'lucide-react';
-import Nav from '../components/Nav';
-import { graphqlClient } from '../api';
+import Nav from '../../components/Nav';
+import { useMutation, useLazyQuery } from '@apollo/client/react';
+import { REGISTER_MUTATION } from '../../api/mutations';
+import { CHECK_EMAIL } from '../../api/queries';
+import { graphqlClient } from '../../api';
 
 // --- Types ---
 type Role = 'client' | 'rider' | 'owner';
@@ -161,6 +164,9 @@ const RegisterPage: React.FC = () => {
     taxId: ''
   });
 
+  const [registerMutation] = useMutation(REGISTER_MUTATION);
+  const [checkEmailQuery] = useLazyQuery(CHECK_EMAIL, { fetchPolicy: 'network-only' });
+
   const updateForm = (key: keyof FormState, value: string) => {
     setFormData(prev => ({ ...prev, [key]: value }));
   };
@@ -207,21 +213,6 @@ const RegisterPage: React.FC = () => {
     if (step > 1) setStep(step - 1);
   };
 
-  const REGISTER_MUTATION = `
-    mutation Register($input: UserInput!) {
-      register(input: $input) {
-        success
-        message
-        token
-        user {
-          id
-          email
-          role
-          fullName
-        }
-      }
-    }
-  `;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -231,9 +222,8 @@ const RegisterPage: React.FC = () => {
       if (step === 2) {
         setIsLoading(true);
         try {
-          const checkQuery = `query($email: String!) { checkEmail(email: $email) }`;
-          const data = await graphqlClient(checkQuery, { email: formData.email });
-          if (data.checkEmail) {
+          const { data } = await checkEmailQuery({ variables: { email: formData.email } });
+          if (data?.checkEmail) {
             setError("Email is already registered. Please login or use a different email.");
             setIsLoading(false);
             return;
@@ -265,7 +255,7 @@ const RegisterPage: React.FC = () => {
         }
       };
 
-      const data = await graphqlClient(REGISTER_MUTATION, variables);
+      const { data } = await registerMutation({ variables });
       const result = data?.register;
 
       if (!result?.success) {

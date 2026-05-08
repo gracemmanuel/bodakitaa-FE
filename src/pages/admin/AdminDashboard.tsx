@@ -4,8 +4,8 @@ import {
   Activity, CheckCircle, XCircle, Search, MoreVertical,
   TrendingUp, TrendingDown, Server, Database, Globe, Clock
 } from 'lucide-react';
-import CombinedNav from '../components/CombinedNav';
-import { getTimeBasedGreeting } from '../utils/greeting';
+import CombinedNav from '../../components/CombinedNav';
+import { getTimeBasedGreeting } from '../../utils/greeting';
 
 // --- Types ---
 interface VerificationRequest {

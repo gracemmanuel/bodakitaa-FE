@@ -1,29 +1,32 @@
 import React from 'react';
 import { useQuery } from '@apollo/client/react';
-import { GET_ME } from '../api/queries';
+import { GET_ME, GET_CLIENT_STATS } from '../../api/queries';
 import { 
   User, Mail, Phone, Shield, 
   MapPin, Star, Award, Settings,
   LogOut, Camera, FileCheck, AlertCircle,
-  ChevronRight, Bike, CreditCard
+  ChevronRight, CreditCard, Activity, Clock
 } from 'lucide-react';
-import CombinedNav from '../components/CombinedNav';
+import CombinedNav from '../../components/CombinedNav';
 import gsap from 'gsap';
 
-const RiderProfilePage: React.FC = () => {
-  const { data, loading } = useQuery(GET_ME);
-  const user = data?.me;
+const ClientProfilePage: React.FC = () => {
+  const { data: meData, loading: meLoading } = useQuery(GET_ME);
+  const { data: statsData } = useQuery(GET_CLIENT_STATS);
+  
+  const user = meData?.me;
+  const stats = statsData?.clientStats;
 
   const profileRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
-    if (!loading && user) {
+    if (!meLoading && user) {
       gsap.fromTo(profileRef.current, 
         { y: 30, opacity: 0 }, 
         { y: 0, opacity: 1, duration: 0.8, ease: "power4.out" }
       );
     }
-  }, [loading, user]);
+  }, [meLoading, user]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -32,8 +35,8 @@ const RiderProfilePage: React.FC = () => {
   };
 
   return (
-    <CombinedNav role="rider">
-      <div className="max-w-5xl mx-auto" ref={profileRef}>
+    <CombinedNav role="client">
+      <div className="max-w-5xl mx-auto pb-12" ref={profileRef}>
         {/* Profile Header */}
         <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[3rem] p-8 md:p-12 relative overflow-hidden shadow-2xl">
           <div className="absolute top-0 right-0 w-96 h-96 bg-primary-light/10 rounded-full blur-3xl -mr-48 -mt-48" />
@@ -57,10 +60,10 @@ const RiderProfilePage: React.FC = () => {
                   <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">{user?.fullName}</h1>
                   <div className="flex flex-wrap justify-center md:justify-start gap-3 mt-2">
                      <span className="px-4 py-1 bg-primary-light/10 text-primary-light rounded-full text-xs font-black uppercase tracking-widest border border-primary-light/20">
-                        {user?.role || 'Rider'}
+                        {user?.role || 'Client'}
                      </span>
                      <div className="flex items-center gap-1 text-amber-500 bg-amber-500/10 px-3 py-1 rounded-full text-xs font-black">
-                        <Star size={14} className="fill-current" /> 4.9 Rating
+                        <Star size={14} fill="currentColor" /> {stats?.loyaltyPoints || 0} Points
                      </div>
                   </div>
                </div>
@@ -86,99 +89,107 @@ const RiderProfilePage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-10">
-           {/* Left: Verification Status */}
+           {/* Left Column: Quick Stats */}
            <div className="md:col-span-1 space-y-6">
               <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[2.5rem] p-8 shadow-xl">
-                 <h3 className="text-xl font-black text-slate-900 dark:text-white mb-6 flex items-center gap-2">
-                    <Shield size={22} className="text-primary-light" /> Verification
-                 </h3>
-                 
-                 <div className="space-y-4">
-                    <div className={`flex items-center justify-between p-4 ${user?.kycStatus === 'verified' ? 'bg-green-500/5 border-green-500/10' : 'bg-amber-500/5 border-amber-500/10'} border rounded-2xl`}>
-                       <div className="flex items-center gap-3">
-                          <FileCheck size={20} className={user?.kycStatus === 'verified' ? 'text-green-500' : 'text-amber-500'} />
-                          <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Identity (KYC)</span>
+                 <h3 className="text-xl font-black text-slate-900 dark:text-white mb-6">Activity Summary</h3>
+                 <div className="space-y-6">
+                    <div className="flex items-center gap-4">
+                       <div className="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
+                          <Activity size={24} />
                        </div>
-                       {user?.kycStatus === 'verified' ? <CheckCircle2 size={18} className="text-green-500" /> : <span className="text-[10px] font-black text-amber-500 uppercase">{user?.kycStatus}</span>}
+                       <div>
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Trips</p>
+                          <p className="text-lg font-black text-slate-900 dark:text-white">{stats?.totalRides || 0}</p>
+                       </div>
                     </div>
-                    
-                    <div className={`flex items-center justify-between p-4 ${user?.kycStatus === 'verified' ? 'bg-green-500/5 border-green-500/10' : 'bg-amber-500/5 border-amber-500/10'} border rounded-2xl`}>
-                       <div className="flex items-center gap-3">
-                          <FileCheck size={20} className={user?.kycStatus === 'verified' ? 'text-green-500' : 'text-amber-500'} />
-                          <span className="text-sm font-bold text-slate-700 dark:text-slate-200">License</span>
+                    <div className="flex items-center gap-4">
+                       <div className="w-12 h-12 rounded-2xl bg-green-500/10 text-green-500 flex items-center justify-center">
+                          <CreditCard size={24} />
                        </div>
-                       {user?.kycStatus === 'verified' ? <CheckCircle2 size={18} className="text-green-500" /> : <span className="text-[10px] font-black text-amber-500 uppercase">{user?.kycStatus}</span>}
+                       <div>
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Spent</p>
+                          <p className="text-lg font-black text-slate-900 dark:text-white">TZS {(stats?.totalSpent || 0).toLocaleString()}</p>
+                       </div>
                     </div>
-
-                    <div className="flex items-center justify-between p-4 bg-blue-500/5 border border-blue-500/10 rounded-2xl">
-                       <div className="flex items-center gap-3">
-                          <Shield size={20} className="text-blue-500" />
-                          <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Insurance</span>
+                    <div className="flex items-center gap-4">
+                       <div className="w-12 h-12 rounded-2xl bg-primary-light/10 text-primary-light flex items-center justify-center">
+                          <Shield size={24} />
                        </div>
-                       <span className="text-[10px] font-black text-blue-500 uppercase">Valid</span>
+                       <div>
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Carbon Saved</p>
+                          <p className="text-lg font-black text-slate-900 dark:text-white">{stats?.carbonSaved || 0} kg</p>
+                       </div>
                     </div>
                  </div>
               </div>
 
-              <div className="bg-gradient-to-br from-primary-dark to-primary-light rounded-[2.5rem] p-8 text-white shadow-xl relative overflow-hidden group">
-                 <Award size={100} className="absolute -bottom-4 -right-4 opacity-10 group-hover:scale-125 transition-transform duration-700" />
-                 <h4 className="text-xl font-black mb-2">Pro Rider Tier</h4>
-                 <p className="text-white/80 text-sm font-medium mb-6">You have completed <span className="font-bold">{user?.totalTrips || 0}</span> rides so far!</p>
-                 <button className="w-full py-3 bg-white/20 backdrop-blur-md rounded-xl font-black text-xs uppercase tracking-widest border border-white/20 hover:bg-white/30 transition-all">
+              <div className="bg-gradient-to-br from-primary-dark to-slate-900 rounded-[2.5rem] p-8 text-white shadow-xl">
+                 <Award size={48} className="text-primary-light mb-4" />
+                 <h4 className="text-xl font-black mb-2">BodaKitaa Gold</h4>
+                 <p className="text-white/60 text-sm font-medium mb-6">You're in the top 5% of our users in Dar es Salaam! Enjoy exclusive discounts on every 10th ride.</p>
+                 <button className="w-full py-3 bg-white/10 backdrop-blur-md rounded-xl font-black text-xs uppercase tracking-widest border border-white/20 hover:bg-white/20 transition-all">
                     View Benefits
                  </button>
               </div>
            </div>
 
-           {/* Right: Detailed Settings/Info */}
+           {/* Right Column: Settings */}
            <div className="md:col-span-2 space-y-8">
               <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[2.5rem] p-8 shadow-xl">
-                 <h3 className="text-xl font-black text-slate-900 dark:text-white mb-8">Account Details</h3>
+                 <h3 className="text-xl font-black text-slate-900 dark:text-white mb-8">Personal Information</h3>
                  
                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                     <div className="space-y-1">
-                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1"><Award size={12} /> License Number</p>
-                       <p className="text-lg font-black text-slate-900 dark:text-white">{user?.licenseNumber || 'N/A'}</p>
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1"><User size={12} /> Full Name</p>
+                       <p className="text-lg font-black text-slate-900 dark:text-white">{user?.fullName}</p>
                     </div>
                     <div className="space-y-1">
-                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1"><Bike size={12} /> Assigned Plate</p>
-                       <p className="text-lg font-black text-slate-900 dark:text-white">{user?.plateNumber || 'N/A'}</p>
-                    </div>
-                    <div className="space-y-1">
-                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1"><MapPin size={12} /> Email</p>
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1"><Mail size={12} /> Email Address</p>
                        <p className="text-lg font-black text-slate-900 dark:text-white">{user?.email}</p>
                     </div>
                     <div className="space-y-1">
-                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1"><CreditCard size={12} /> Phone Number</p>
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1"><Phone size={12} /> Phone Number</p>
                        <p className="text-lg font-black text-slate-900 dark:text-white">{user?.phone}</p>
+                    </div>
+                    <div className="space-y-1">
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1"><MapPin size={12} /> Home City</p>
+                       <p className="text-lg font-black text-slate-900 dark:text-white">Dar es Salaam, TZ</p>
                     </div>
                  </div>
 
                  <div className="mt-12 space-y-4">
                     <button className="w-full flex items-center justify-between p-5 bg-slate-50 dark:bg-white/5 rounded-2xl hover:bg-slate-100 dark:hover:bg-white/10 transition-all group">
                        <div className="flex items-center gap-4">
-                          <Settings size={20} className="text-slate-400 group-hover:rotate-90 transition-transform" />
-                          <span className="font-bold text-slate-700 dark:text-slate-200">App Preferences</span>
+                          <CreditCard size={20} className="text-slate-400" />
+                          <span className="font-bold text-slate-700 dark:text-slate-200">Manage Payment Methods</span>
                        </div>
                        <ChevronRight size={18} className="text-slate-300" />
                     </button>
                     <button className="w-full flex items-center justify-between p-5 bg-slate-50 dark:bg-white/5 rounded-2xl hover:bg-slate-100 dark:hover:bg-white/10 transition-all group">
                        <div className="flex items-center gap-4">
-                          <Shield size={20} className="text-slate-400" />
-                          <span className="font-bold text-slate-700 dark:text-slate-200">Privacy & Security</span>
+                          <Settings size={20} className="text-slate-400 group-hover:rotate-90 transition-transform" />
+                          <span className="font-bold text-slate-700 dark:text-slate-200">Account Preferences</span>
+                       </div>
+                       <ChevronRight size={18} className="text-slate-300" />
+                    </button>
+                    <button className="w-full flex items-center justify-between p-5 bg-slate-50 dark:bg-white/5 rounded-2xl hover:bg-slate-100 dark:hover:bg-white/10 transition-all group">
+                       <div className="flex items-center gap-4">
+                          <Clock size={20} className="text-slate-400" />
+                          <span className="font-bold text-slate-700 dark:text-slate-200">Privacy & Data</span>
                        </div>
                        <ChevronRight size={18} className="text-slate-300" />
                     </button>
                  </div>
               </div>
 
-              <div className="bg-amber-500/10 border border-amber-500/20 rounded-[2.5rem] p-8 flex items-center gap-6">
-                 <div className="w-16 h-16 bg-amber-500/20 text-amber-500 rounded-3xl flex items-center justify-center flex-shrink-0">
+              <div className="bg-primary-light/10 border border-primary-light/20 rounded-[2.5rem] p-8 flex items-center gap-6">
+                 <div className="w-16 h-16 bg-primary-light/20 text-primary-light rounded-3xl flex items-center justify-center flex-shrink-0">
                     <AlertCircle size={32} />
                  </div>
                  <div>
-                    <h4 className="font-black text-slate-900 dark:text-white">Safety First</h4>
-                    <p className="text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed">Remember to always wear your helmet and reflective vest. Your safety and your passenger's safety is our top priority.</p>
+                    <h4 className="font-black text-slate-900 dark:text-white">Profile Strength</h4>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed">Add a home address and work address to speed up your booking process. You're 85% verified.</p>
                  </div>
               </div>
            </div>
@@ -188,4 +199,4 @@ const RiderProfilePage: React.FC = () => {
   );
 };
 
-export default RiderProfilePage;
+export default ClientProfilePage;

@@ -3,11 +3,12 @@ import {
   MapPin, Navigation, Clock, Shield, Bike, Star, 
   CheckCircle2, CreditCard, ArrowRight, Zap, Award, AlertCircle, RefreshCcw, Plus, X, Phone, User, Loader2
 } from 'lucide-react';
-import CombinedNav from '../components/CombinedNav';
-import MapComponent from '../components/MapComponent';
-import { graphqlClient } from '../api';
+import CombinedNav from '../../components/CombinedNav';
+import MapComponent from '../../components/MapComponent';
+import { graphqlClient } from '../../api';
 import { useQuery, useMutation } from '@apollo/client/react';
-import { GET_MY_ACTIVE_REQUEST, CONFIRM_RIDE } from '../api/queries';
+import { GET_MY_ACTIVE_REQUEST } from '../../api/queries';
+import { CONFIRM_RIDE, REQUEST_RIDE } from '../../api/mutations';
 
 // --- Types ---
 type RideType = 'ride' | 'delivery';
@@ -227,6 +228,7 @@ const RequestRidePage: React.FC = () => {
   const [isLocating, setIsLocating] = useState(false);
   const [midwayStops, setMidwayStops] = useState<{ id: string; address: string; coords: Coords | null }[]>([]);
   const [confirmRide, { loading: isConfirming }] = useMutation(CONFIRM_RIDE);
+  const [requestRideMutation] = useMutation(REQUEST_RIDE);
 
   // ── Poll active ride for client tracking ─────────────────────────────────
   const { data: trackingData, stopPolling, startPolling } = useQuery(GET_MY_ACTIVE_REQUEST, {
@@ -360,30 +362,21 @@ const RequestRidePage: React.FC = () => {
     setIsRequesting(true);
     setError(null);
     try {
-      const requestMutation = `
-        mutation($pickupAddress: String!, $destinationAddress: String!, $pickupLat: Float!, $pickupLng: Float!, $destinationLat: Float!, $destinationLng: Float!, $rideType: String!, $midwayStops: String) {
-          requestRide(pickupAddress: $pickupAddress, destinationAddress: $destinationAddress, pickupLat: $pickupLat, pickupLng: $pickupLng, destinationLat: $destinationLat, destinationLng: $destinationLng, rideType: $rideType, midwayStops: $midwayStops) {
-            ride {
-              id
-              status
-            }
-          }
-        }
-      `;
-      
       const formattedStops = midwayStops
         .filter(s => s.coords)
         .map(s => ({ address: s.address, lat: s.coords!.lat, lng: s.coords!.lng }));
 
-      await graphqlClient(requestMutation, {
-        pickupAddress: pickup,
-        destinationAddress: destination,
-        pickupLat: pickupCoords?.lat ?? -6.7924,
-        pickupLng: pickupCoords?.lng ?? 39.2083,
-        destinationLat: destCoords?.lat ?? -6.8235,
-        destinationLng: destCoords?.lng ?? 39.2695,
-        rideType,
-        midwayStops: JSON.stringify(formattedStops)
+      await requestRideMutation({
+        variables: {
+          pickupAddress: pickup,
+          destinationAddress: destination,
+          pickupLat: pickupCoords?.lat ?? -6.7924,
+          pickupLng: pickupCoords?.lng ?? 39.2083,
+          destinationLat: destCoords?.lat ?? -6.8235,
+          destinationLng: destCoords?.lng ?? 39.2695,
+          rideType,
+          midwayStops: JSON.stringify(formattedStops)
+        }
       });
       // Switch to live tracking mode
       setIsSuccess(true);
@@ -417,28 +410,30 @@ const RequestRidePage: React.FC = () => {
                   trackedRide?.status === 'accepted' ? 'bg-primary-light/15 border border-primary-light/30' :
                   'bg-amber-500/15 border border-amber-500/30'
                 }`}>
-                    <p className={`font-black text-sm ${
-                      trackedRide?.status === 'completed' ? 'text-green-600 dark:text-green-400' :
-                      trackedRide?.status === 'in_progress' ? 'text-blue-600 dark:text-blue-400' :
-                      trackedRide?.status === 'confirmed' ? 'text-primary-light' :
-                      trackedRide?.status === 'accepted' ? 'text-amber-600 dark:text-amber-400' :
-                      'text-amber-600 dark:text-amber-400'
-                    }`}>
-                      {trackedRide?.status === 'pending' && 'Searching for a rider...'}
-                      {trackedRide?.status === 'accepted' && 'Rider Found! Review details below'}
-                      {trackedRide?.status === 'confirmed' && 'Rider is on the way!'}
-                      {trackedRide?.status === 'in_progress' && 'Journey in progress'}
-                      {trackedRide?.status === 'completed' && 'Ride Completed!'}
-                      {!trackedRide && 'Booking confirmed — waiting for riders...'}
-                    </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                      {trackedRide?.status === 'pending' && 'Your request is live. Riders near you can see it.'}
-                      {trackedRide?.status === 'accepted' && 'Please confirm the rider to start your journey.'}
-                      {trackedRide?.status === 'confirmed' && 'Your rider has confirmed and is heading to pick you up.'}
-                      {trackedRide?.status === 'in_progress' && 'En route to your destination.'}
-                      {trackedRide?.status === 'completed' && 'Thank you for riding with BodaKitaa!'}
-                      {!trackedRide && 'Live-updating every 5 seconds.'}
-                    </p>
+                    <div className="flex flex-col">
+                      <p className={`font-black text-sm ${
+                        trackedRide?.status === 'completed' ? 'text-green-600 dark:text-green-400' :
+                        trackedRide?.status === 'in_progress' ? 'text-blue-600 dark:text-blue-400' :
+                        trackedRide?.status === 'confirmed' ? 'text-primary-light' :
+                        trackedRide?.status === 'accepted' ? 'text-amber-600 dark:text-amber-400' :
+                        'text-amber-600 dark:text-amber-400'
+                      }`}>
+                        {trackedRide?.status === 'pending' && 'Searching for a rider...'}
+                        {trackedRide?.status === 'accepted' && 'Rider Found! Review details below'}
+                        {trackedRide?.status === 'confirmed' && 'Rider is on the way!'}
+                        {trackedRide?.status === 'in_progress' && 'Journey in progress'}
+                        {trackedRide?.status === 'completed' && 'Ride Completed!'}
+                        {!trackedRide && 'Booking confirmed — waiting for riders...'}
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        {trackedRide?.status === 'pending' && 'Your request is live. Riders near you can see it.'}
+                        {trackedRide?.status === 'accepted' && 'Please confirm the rider to start your journey.'}
+                        {trackedRide?.status === 'confirmed' && 'Your rider has confirmed and is heading to pick you up.'}
+                        {trackedRide?.status === 'in_progress' && 'En route to your destination.'}
+                        {trackedRide?.status === 'completed' && 'Thank you for riding with BodaKitaa!'}
+                        {!trackedRide && 'Live-updating every 5 seconds.'}
+                      </p>
+                    </div>
                   </div>
 
                 {/* Rider Info — shown once accepted */}

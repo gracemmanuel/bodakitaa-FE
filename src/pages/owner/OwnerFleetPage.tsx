@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Bike, Users, Search, Plus, Filter, MoreHorizontal, Wrench, ChevronRight } from 'lucide-react';
-import CombinedNav from '../components/CombinedNav';
-import { graphqlClient } from '../api';
+import CombinedNav from '../../components/CombinedNav';
+import { graphqlClient } from '../../api';
 
 interface BikeData {
   id: string;

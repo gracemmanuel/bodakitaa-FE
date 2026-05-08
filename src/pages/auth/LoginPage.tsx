@@ -5,8 +5,11 @@ import {
   Mail, Lock, ArrowRight, Bike, ShieldCheck,
   Smartphone, Eye, EyeOff, AlertCircle, CheckCircle2
 } from 'lucide-react';
-import Nav from '../components/Nav';
+import Nav from '../../components/Nav';
 import gsap from 'gsap';
+import { useMutation, useLazyQuery } from '@apollo/client/react';
+import { LOGIN_MUTATION } from '../../api/mutations';
+import { GET_ME } from '../../api/queries';
 
 // --- Sub-Components ---
 const AuthBackground: React.FC = () => {
@@ -53,6 +56,9 @@ const LoginPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [login] = useMutation(LOGIN_MUTATION);
+  const [fetchMe] = useLazyQuery(GET_ME, { fetchPolicy: 'network-only' });
+
   // Validation states
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
@@ -71,31 +77,17 @@ const LoginPage: React.FC = () => {
     setError(null);
 
     try {
-      const { graphqlClient } = await import('../api/index');
+      const { data } = await login({
+        variables: { username: email, password }
+      });
       
-      const loginMutation = `
-        mutation($email: String!, $password: String!) {
-          tokenAuth(username: $email, password: $password) {
-            token
-          }
-        }
-      `;
+      const token = data?.tokenAuth?.token;
+      if (!token) throw new Error("Login failed - No token received");
       
-      const data = await graphqlClient(loginMutation, { email, password });
-      localStorage.setItem('token', data.tokenAuth.token);
+      localStorage.setItem('token', token);
       
-      const meQuery = `
-        query {
-          me {
-            id
-            email
-            fullName
-            role
-          }
-        }
-      `;
       // 2. Fetch user profile
-      const meData = await graphqlClient(meQuery);
+      const { data: meData } = await fetchMe();
       const user = meData?.me;
       
       if (!user) {
@@ -104,19 +96,14 @@ const LoginPage: React.FC = () => {
 
       localStorage.setItem('user', JSON.stringify(user));
       
-      // 3. Role-based redirection (Case-insensitive)
+      // 3. Role-based redirection
       const role = user.role?.toLowerCase();
       
-      if (role === 'admin') {
-        navigate('/dashboard/admin');
-      } else if (role === 'owner') {
-        navigate('/dashboard/owner');
-      } else if (role === 'rider') {
-        navigate('/dashboard/rider');
-      } else {
-        // Default to client for any other role (including 'client')
-        navigate('/dashboard/client');
-      }
+      if (role === 'admin') navigate('/dashboard/admin');
+      else if (role === 'owner') navigate('/dashboard/owner');
+      else if (role === 'rider') navigate('/dashboard/rider');
+      else navigate('/dashboard/client');
+
     } catch (err: any) {
       console.error("Login process error:", err);
       setError(err.message || 'Login failed. Please check your credentials.');

@@ -6,14 +6,16 @@ import {
   Bell, MapPin as MapPinIcon, Info
 } from 'lucide-react';
 import { gsap } from 'gsap';
-import CombinedNav from '../components/CombinedNav';
+import CombinedNav from '../../components/CombinedNav';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import {
   GET_PENDING_RIDE_REQUESTS,
-  GET_ACTIVE_RIDE_FOR_RIDER,
+  GET_ACTIVE_RIDE_FOR_RIDER
+} from '../../api/queries';
+import {
   ACCEPT_RIDE, START_RIDE, COMPLETE_RIDE, UPDATE_RIDER_LOCATION
-} from '../api/queries';
+} from '../../api/mutations';
 
 // ─── Haversine distance ───────────────────────────────────────────────────────
 function haversine(lat1: number, lng1: number, lat2: number, lng2: number) {

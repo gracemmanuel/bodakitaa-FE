@@ -4,8 +4,8 @@ import {
   MoreHorizontal, ChevronLeft, ChevronRight, 
   CheckCircle2, XCircle, Activity, Star
 } from 'lucide-react';
-import CombinedNav from '../components/CombinedNav';
-import { graphqlClient } from '../api';
+import CombinedNav from '../../components/CombinedNav';
+import { graphqlClient } from '../../api';
 
 // --- Types ---
 interface Ride {

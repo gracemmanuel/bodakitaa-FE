@@ -1,12 +1,12 @@
 import React from 'react';
 import { useQuery } from '@apollo/client/react';
-import { GET_RIDE_HISTORY } from '../api/queries';
+import { GET_RIDE_HISTORY } from '../../api/queries';
 import { 
   History, Navigation, MapPin, Calendar, 
   ChevronRight, Search, Filter, Star,
   Clock, CreditCard, CheckCircle2, XCircle
 } from 'lucide-react';
-import CombinedNav from '../components/CombinedNav';
+import CombinedNav from '../../components/CombinedNav';
 import gsap from 'gsap';
 
 const RiderHistoryPage: React.FC = () => {

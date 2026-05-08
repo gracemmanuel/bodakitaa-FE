@@ -1,12 +1,12 @@
 import React from 'react';
 import { useQuery } from '@apollo/client/react';
-import { GET_RIDER_WALLET, GET_RIDER_STATS } from '../api/queries';
+import { GET_RIDER_WALLET, GET_RIDER_STATS } from '../../api/queries';
 import { 
   Wallet, TrendingUp, ArrowUpRight, ArrowDownLeft, 
   Clock, Filter, Download, DollarSign, PieChart,
   ChevronRight, Calendar
 } from 'lucide-react';
-import CombinedNav from '../components/CombinedNav';
+import CombinedNav from '../../components/CombinedNav';
 import gsap from 'gsap';
 
 const RiderEarningsPage: React.FC = () => {

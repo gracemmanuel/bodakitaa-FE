@@ -1,12 +1,12 @@
 import React from 'react';
 import { useQuery } from '@apollo/client/react';
-import { GET_RIDER_VEHICLE } from '../api/queries';
+import { GET_RIDER_VEHICLE } from '../../api/queries';
 import { 
   Bike, Settings, Wrench, Fuel, Shield, 
   ChevronRight, AlertTriangle, CheckCircle2,
   Calendar, MapPin, Gauge, Droplet, FileText
 } from 'lucide-react';
-import CombinedNav from '../components/CombinedNav';
+import CombinedNav from '../../components/CombinedNav';
 import gsap from 'gsap';
 
 const RiderVehiclePage: React.FC = () => {
