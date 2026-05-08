@@ -77,6 +77,32 @@ export const GET_RIDER_STATS = gql`
       weeklyTotal
       avgEarningPerRide
       activeVehiclePlate
+      activeRide {
+        id
+        pickupAddress
+        destinationAddress
+        pickupLat
+        pickupLng
+        destinationLat
+        destinationLng
+        totalFare
+        status
+        client {
+          fullName
+          phone
+          rating
+        }
+      }
+      pendingRequests {
+        id
+        pickupAddress
+        destinationAddress
+        totalFare
+        client {
+          fullName
+          rating
+        }
+      }
       weeklyEarnings {
         day
         amount
@@ -165,78 +191,6 @@ export const GET_MY_ACTIVE_REQUEST = gql`
   }
 `;
 
-export const CONFIRM_RIDE = gql`
-  mutation ConfirmRide($rideId: Int!) {
-    confirmRide(rideId: $rideId) {
-      success
-      message
-      ride {
-        id
-        status
-      }
-    }
-  }
-`;
-
-export const ACCEPT_RIDE = gql`
-  mutation AcceptRide($rideId: Int!) {
-    acceptRide(rideId: $rideId) {
-      success
-      message
-      ride {
-        id
-        status
-        pickupLat
-        pickupLng
-        destinationLat
-        destinationLng
-        pickupAddress
-        destinationAddress
-        totalFare
-        client {
-          fullName
-          phone
-          rating
-        }
-      }
-    }
-  }
-`;
-
-export const START_RIDE = gql`
-  mutation StartRide($rideId: Int!) {
-    startRide(rideId: $rideId) {
-      success
-      message
-      ride {
-        id
-        status
-      }
-    }
-  }
-`;
-
-export const COMPLETE_RIDE = gql`
-  mutation CompleteRide($rideId: Int!) {
-    completeRide(rideId: $rideId) {
-      success
-      message
-      ride {
-        id
-        status
-        finalFare
-      }
-    }
-  }
-`;
-
-export const UPDATE_RIDER_LOCATION = gql`
-  mutation UpdateRiderLocation($rideId: Int!, $lat: Float!, $lng: Float!) {
-    updateRiderLocation(rideId: $rideId, lat: $lat, lng: $lng) {
-      success
-    }
-  }
-`;
 
 export const GET_MY_NOTIFICATIONS = gql`
   query GetMyNotifications {
@@ -292,6 +246,61 @@ export const GET_RIDER_VEHICLE = gql`
       totalCostTzs
       odometerAtFillKm
       refilledAt
+    }
+  }
+`;
+
+export const GET_OWNER_STATS = gql`
+  query GetOwnerStats {
+    ownerStats {
+      totalFleetRevenue
+      activeBikes
+      totalBikes
+      activeRiders
+      avgFleetRating
+      alertsCount
+      revenueData
+    }
+  }
+`;
+
+export const GET_ALL_RIDERS = gql`
+  query GetAllRiders {
+    allRiders {
+      id
+      fullName
+      phone
+      rating
+      totalTrips
+      kycStatus
+      assignedVehicle {
+        plateNumber
+      }
+    }
+  }
+`;
+
+
+export const CHECK_EMAIL = gql`
+  query CheckEmail($email: String!) {
+    checkEmail(email: $email)
+  }
+`;
+
+export const GET_MY_RIDES = gql`
+  query GetMyRides {
+    myRides {
+      id
+      pickupAddress
+      destinationAddress
+      status
+      baseFare
+      totalFare
+      finalFare
+      requestedAt
+      rider {
+        fullName
+      }
     }
   }
 `;

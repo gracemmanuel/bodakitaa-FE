@@ -87,7 +87,7 @@ const Sidebar: React.FC<SidebarProps> = ({ role, closeSidebar }) => {
       </nav>
 
       <div className="pt-6 mt-6 border-t border-slate-200 dark:border-white/10 flex flex-col gap-2">
-        <Link to="/dashboard/profile" className="flex items-center gap-3 px-4 py-3 rounded-2xl text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/5 hover:text-primary-light transition-all">
+        <Link to={`/dashboard/${role}/profile`} className="flex items-center gap-3 px-4 py-3 rounded-2xl text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/5 hover:text-primary-light transition-all">
           <Settings size={20} />
           <span className="font-bold text-sm">{t('dashboard.profile')}</span>
         </Link>

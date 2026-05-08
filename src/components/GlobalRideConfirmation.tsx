@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useQuery, useMutation } from '@apollo/client/react';
-import { GET_MY_ACTIVE_REQUEST, CONFIRM_RIDE } from '../api/queries';
+import { GET_MY_ACTIVE_REQUEST } from '../api/queries';
+import { CONFIRM_RIDE } from '../api/mutations';
 import { 
   CheckCircle2, Star, Bike, Shield, Loader2, X, Bell, Navigation, Phone, 
   MapPin, Clock

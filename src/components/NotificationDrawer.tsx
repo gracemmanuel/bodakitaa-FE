@@ -45,22 +45,22 @@ const NotificationDrawer: React.FC<Props> = ({ isOpen, onClose }) => {
     if (isOpen) {
       refetch();
       
-      // Entrance animation: Scale and Fade
-      gsap.to(overlayRef.current, { autoAlpha: 1, duration: 0.3, ease: 'power2.out' });
+      // Entrance animation: Simple Fade and Slide
+      gsap.to(overlayRef.current, { autoAlpha: 1, duration: 0.2, ease: 'power2.out' });
       gsap.fromTo(panelRef.current, 
-        { scale: 0.95, opacity: 0, y: -20 },
-        { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: 'back.out(1.7)', force3D: true }
+        { opacity: 0, y: -10 },
+        { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out', force3D: true }
       );
       
       if (listRef.current) {
         gsap.fromTo(listRef.current.children, 
-          { y: 20, opacity: 0 }, 
-          { y: 0, opacity: 1, duration: 0.4, stagger: 0.08, ease: 'power2.out', delay: 0.2 }
+          { y: 10, opacity: 0 }, 
+          { y: 0, opacity: 1, duration: 0.3, stagger: 0.05, ease: 'power2.out', delay: 0.1 }
         );
       }
     } else {
-      gsap.to(overlayRef.current, { autoAlpha: 0, duration: 0.3, ease: 'power2.in' });
-      gsap.to(panelRef.current, { scale: 0.95, opacity: 0, y: -20, duration: 0.3, ease: 'power2.in' });
+      gsap.to(overlayRef.current, { autoAlpha: 0, duration: 0.2, ease: 'power2.in' });
+      gsap.to(panelRef.current, { opacity: 0, y: -10, duration: 0.2, ease: 'power2.in' });
     }
   }, [isOpen, refetch]);
 
@@ -92,13 +92,13 @@ const NotificationDrawer: React.FC<Props> = ({ isOpen, onClose }) => {
     <>
       <div 
         ref={overlayRef}
-        className="fixed inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm z-[20000] invisible opacity-0 transition-all"
+        className="fixed inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm z-[99998] invisible opacity-0 transition-all"
         onClick={onClose}
       />
       
       <div 
         ref={panelRef}
-        className="fixed top-24 right-4 md:right-8 w-[92%] sm:w-[420px] max-h-[80vh] bg-white/80 dark:bg-slate-900/80 backdrop-blur-3xl border border-white/20 dark:border-white/10 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)] z-[20001] rounded-[2.5rem] flex flex-col overflow-hidden opacity-0"
+        className="fixed top-24 right-4 md:right-8 w-[92%] sm:w-[420px] max-h-[80vh] bg-white/80 dark:bg-slate-900/80 backdrop-blur-3xl border border-white/20 dark:border-white/10 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)] z-[99999] rounded-[2.5rem] flex flex-col overflow-hidden opacity-0"
       >
         {/* Header */}
         <div className="p-6 border-b border-slate-100 dark:border-white/5 flex items-center justify-between bg-gradient-to-br from-primary-light/5 to-transparent">
