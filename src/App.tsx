@@ -12,6 +12,10 @@ import OwnerDashboard from './pages/OwnerDashboard';
 import OwnerFleetPage from './pages/OwnerFleetPage';
 import OwnerRidersPage from './pages/OwnerRidersPage';
 import AdminDashboard from './pages/AdminDashboard';
+import RiderEarningsPage from './pages/RiderEarningsPage';
+import RiderHistoryPage from './pages/RiderHistoryPage';
+import RiderVehiclePage from './pages/RiderVehiclePage';
+import RiderProfilePage from './pages/RiderProfilePage';
 import './App.css';
 import './i18n/config';
 
@@ -31,6 +35,10 @@ function App() {
             <Route path="/dashboard/client/request" element={<RequestRidePage />} />
             <Route path="/dashboard/rider" element={<RiderDashboard />} />
             <Route path="/dashboard/rider/requests" element={<RiderRequestsPage />} />
+            <Route path="/dashboard/rider/earnings" element={<RiderEarningsPage />} />
+            <Route path="/dashboard/rider/history" element={<RiderHistoryPage />} />
+            <Route path="/dashboard/rider/vehicle" element={<RiderVehiclePage />} />
+            <Route path="/dashboard/rider/profile" element={<RiderProfilePage />} />
             <Route path="/dashboard/owner" element={<OwnerDashboard />} />
             <Route path="/dashboard/owner/fleet" element={<OwnerFleetPage />} />
             <Route path="/dashboard/owner/riders" element={<OwnerRidersPage />} />

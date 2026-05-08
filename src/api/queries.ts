@@ -12,6 +12,7 @@ export const GET_ME = gql`
       plateNumber
       companyName
       taxId
+      kycStatus
     }
   }
 `;
@@ -73,6 +74,9 @@ export const GET_RIDER_STATS = gql`
       rating
       targetAmount
       targetCompletedAmount
+      weeklyTotal
+      avgEarningPerRide
+      activeVehiclePlate
       weeklyEarnings {
         day
         amount
@@ -243,6 +247,51 @@ export const GET_MY_NOTIFICATIONS = gql`
       notificationType
       isRead
       createdAt
+    }
+  }
+`;
+
+export const GET_RIDER_WALLET = gql`
+  query GetRiderWallet {
+    myWallet {
+      id
+      balanceTzs
+    }
+    myTransactions {
+      id
+      transactionType
+      amountTzs
+      balanceAfterTzs
+      status
+      description
+      createdAt
+    }
+  }
+`;
+
+export const GET_RIDER_VEHICLE = gql`
+  query GetRiderVehicle {
+    myVehicle {
+      id
+      make
+      modelName
+      year
+      plateNumber
+      status
+      fuelType
+      odometerKm
+      maintenanceStatus
+      lastOilChangeKm
+      daysToInsuranceExpiry
+      daysToInspection
+      createdAt
+    }
+    myFuelLogs {
+      id
+      litersAdded
+      totalCostTzs
+      odometerAtFillKm
+      refilledAt
     }
   }
 `;

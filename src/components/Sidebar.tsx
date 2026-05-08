@@ -26,10 +26,10 @@ const Sidebar: React.FC<SidebarProps> = ({ role, closeSidebar }) => {
     rider: [
       { path: '/dashboard/rider', icon: LayoutDashboard, label: t('dashboard.overview') },
       { path: '/dashboard/rider/requests', icon: MapPin, label: 'My Requests' },
-      { path: '/dashboard/rider/rides', icon: ClipboardList, label: t('dashboard.rides') },
-      { path: '/dashboard/rider/income', icon: Wallet, label: t('dashboard.income') },
-      { path: '/dashboard/rider/analysis', icon: FileBarChart, label: t('dashboard.analysis') },
-      // { path: '/dashboard/rider/wallet', icon: Wallet, label: t('dashboard.wallet') },
+      { path: '/dashboard/rider/earnings', icon: Wallet, label: t('dashboard.income') },
+      { path: '/dashboard/rider/history', icon: ClipboardList, label: t('dashboard.rides') },
+      { path: '/dashboard/rider/vehicle', icon: Bike, label: 'My Vehicle' },
+      { path: '/dashboard/rider/profile', icon: Settings, label: 'Profile' },
     ],
     owner: [
       { path: '/dashboard/owner', icon: LayoutDashboard, label: t('dashboard.overview') },
