@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, Bike, Users, Wallet, FileBarChart, 
-  Settings, LogOut, MapPin, ClipboardList, X
+  Settings, LogOut, MapPin, ClipboardList, X, Star
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -20,12 +20,14 @@ const Sidebar: React.FC<SidebarProps> = ({ role, closeSidebar }) => {
       { path: '/dashboard/client', icon: LayoutDashboard, label: t('dashboard.overview') },
       { path: '/dashboard/client/request', icon: Bike, label: 'Request Ride' },
       { path: '/dashboard/client/rides', icon: MapPin, label: t('dashboard.rides') },
+      { path: '/dashboard/client/rating', icon: Star, label: t('dashboard.rating') },
       // { path: '/dashboard/client/wallet', icon: Wallet, label: t('dashboard.wallet') },
     ],
     rider: [
       { path: '/dashboard/rider', icon: LayoutDashboard, label: t('dashboard.overview') },
       { path: '/dashboard/rider/requests', icon: MapPin, label: 'My Requests' },
       { path: '/dashboard/rider/rides', icon: ClipboardList, label: t('dashboard.rides') },
+      { path: '/dashboard/rider/income', icon: Wallet, label: t('dashboard.income') },
       { path: '/dashboard/rider/analysis', icon: FileBarChart, label: t('dashboard.analysis') },
       // { path: '/dashboard/rider/wallet', icon: Wallet, label: t('dashboard.wallet') },
     ],
@@ -33,13 +35,15 @@ const Sidebar: React.FC<SidebarProps> = ({ role, closeSidebar }) => {
       { path: '/dashboard/owner', icon: LayoutDashboard, label: t('dashboard.overview') },
       { path: '/dashboard/owner/fleet', icon: Bike, label: t('dashboard.fleet') },
       { path: '/dashboard/owner/riders', icon: Users, label: t('dashboard.riders') },
+      { path: '/dashboard/owner/track_riders', icon: MapPin, label: t('dashboard.track_riders') },
+      { path: '/dashboard/owner/income', icon: Wallet, label: t('dashboard.track_income') },
       { path: '/dashboard/owner/reports', icon: FileBarChart, label: t('dashboard.analysis') },
     ],
     admin: [
       { path: '/dashboard/admin', icon: LayoutDashboard, label: t('dashboard.overview') },
       { path: '/dashboard/admin/users', icon: Users, label: t('dashboard.riders') },
       { path: '/dashboard/admin/reports', icon: FileBarChart, label: t('dashboard.analysis') },
-      { path: '/dashboard/admin/settings', icon: Settings, label: t('dashboard.settings') },
+      // { path: '/dashboard/admin/settings', icon: Settings, label: t('dashboard.settings') },
     ]
   };
 
