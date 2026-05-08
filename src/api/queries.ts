@@ -233,3 +233,16 @@ export const UPDATE_RIDER_LOCATION = gql`
     }
   }
 `;
+
+export const GET_MY_NOTIFICATIONS = gql`
+  query GetMyNotifications {
+    myNotifications {
+      id
+      title
+      message
+      notificationType
+      isRead
+      createdAt
+    }
+  }
+`;

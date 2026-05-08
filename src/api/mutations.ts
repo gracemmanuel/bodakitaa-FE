@@ -57,3 +57,16 @@ export const UPDATE_PROFILE_MUTATION = gql`
     }
   }
 `;
+
+export const MARK_NOTIFICATION_READ = gql`
+  mutation MarkNotificationRead($id: ID!) {
+    markNotificationRead(input: { id: $id }) {
+      success
+      message
+      notification {
+        id
+        isRead
+      }
+    }
+  }
+`;

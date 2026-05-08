@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
 import { Sun, Moon, Globe, Bike, Menu, X, ArrowRight, Bell, User } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import NotificationDrawer from './NotificationDrawer';
 
 interface NavProps {
   variant?: 'public' | 'dashboard';
@@ -16,6 +17,7 @@ const Nav: React.FC<NavProps> = ({ variant = 'public', role = 'client', onMenuCl
   const navigate = useNavigate();
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = React.useState(false);
   const [userName, setUserName] = React.useState('User');
 
   React.useEffect(() => {
@@ -66,7 +68,7 @@ const Nav: React.FC<NavProps> = ({ variant = 'public', role = 'client', onMenuCl
             {isDark ? <Sun size={18} /> : <Moon size={18} />}
           </button>
 
-          <button className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-full transition-colors relative text-slate-700 dark:text-white">
+          <button onClick={() => setIsNotificationOpen(true)} className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-full transition-colors relative text-slate-700 dark:text-white">
             <Bell size={18} />
             <span className="absolute top-2 right-2 w-2 h-2 bg-primary-light rounded-full border border-white dark:border-black animate-pulse" />
           </button>
@@ -95,6 +97,7 @@ const Nav: React.FC<NavProps> = ({ variant = 'public', role = 'client', onMenuCl
             </div>
           </div>
         </div>
+        <NotificationDrawer isOpen={isNotificationOpen} onClose={() => setIsNotificationOpen(false)} />
       </header>
     );
   }
