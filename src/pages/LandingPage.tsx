@@ -127,9 +127,9 @@ const HeroSection: React.FC = () => {
           </div>
 
           <h1 className="hero-title text-4xl xs:text-5xl sm:text-7xl lg:text-8xl font-black leading-[1.1] tracking-tight text-transparent bg-clip-text bg-gradient-to-br from-slate-900 to-slate-700 dark:from-white dark:to-slate-400">
-            <span className="block">Smart</span>
+            <span className="block text-primary-light">Smart</span>
             <span className="block text-primary-light">Transport</span>
-            <span className="block">Ecosystem</span>
+            <span className="block text-primary-light">Ecosystem</span>
           </h1>
 
           <p className="hero-subtitle text-xl sm:text-2xl text-slate-600 dark:text-slate-300 max-w-xl font-light leading-relaxed">

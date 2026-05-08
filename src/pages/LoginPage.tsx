@@ -183,7 +183,7 @@ const LoginPage: React.FC = () => {
                     onChange={(e) => setEmail(e.target.value)}
                     onFocus={() => setEmailFocused(true)}
                     onBlur={() => setEmailFocused(false)}
-                    className="flex-1 py-4 pr-4 bg-transparent outline-none !text-slate-900 dark:!text-white placeholder:text-slate-400 font-medium text-base"
+                    className="flex-1 py-4 pr-4 bg-transparent outline-none text-slate-900 dark:text-white placeholder:text-slate-400 font-medium text-base"
                     placeholder="name@example.com"
                     required
                   />
@@ -213,7 +213,7 @@ const LoginPage: React.FC = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     onFocus={() => setPasswordFocused(true)}
                     onBlur={() => setPasswordFocused(false)}
-                    className="flex-1 py-4 pr-12 bg-transparent outline-none !text-slate-900 dark:!text-white placeholder:text-slate-400 font-medium text-base tracking-wide"
+                    className="flex-1 py-4 pr-12 bg-transparent outline-none text-slate-900 dark:text-white placeholder:text-slate-400 font-medium text-base tracking-wide"
                     placeholder="••••••••"
                     required
                   />

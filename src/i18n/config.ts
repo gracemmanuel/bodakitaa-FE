@@ -41,7 +41,9 @@ const resources = {
         "bikes": "Bikes",
         "riders": "Riders",
         "reports": "Reports",
+        "analysis": "Analysis",
         "settings": "Settings",
+        "profile": "Profile",
         "logout": "Logout",
         "welcome": "Welcome back, {{name}}",
         "stats": {
@@ -92,7 +94,9 @@ const resources = {
         "bikes": "Pikipiki",
         "riders": "Madereva",
         "reports": "Ripoti",
+        "analysis": "Uchambuzi",
         "settings": "Mipangilio",
+        "profile": "Wasifu",
         "logout": "Ondoka",
         "welcome": "Karibu tena, {{name}}",
         "stats": {
