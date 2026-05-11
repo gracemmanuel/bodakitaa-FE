@@ -304,3 +304,20 @@ export const GET_MY_RIDES = gql`
     }
   }
 `;
+
+// export const GET_RIDER_REQUESTS = gql`
+//   query GetRiderRequests {
+//     myRequests {
+//       id
+//       pickupAddress
+//       destinationAddress
+//       status
+//       baseFare
+//       totalFare
+//       requestedAt
+//       client {
+//         fullName
+//       }
+//     }
+//   }
+// `;
