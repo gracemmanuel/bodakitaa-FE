@@ -183,3 +183,58 @@ export const RATE_RIDE = gql`
     }
   }
 `;
+
+export const UPDATE_VEHICLE_DETAILS = gql`
+  mutation UpdateVehicleDetails(
+    $vehicleId: Int!, 
+    $tinNumber: String, 
+    $engineNumber: String, 
+    $engineCapacityCc: Int, 
+    $isTbsInspected: Boolean, 
+    $transportGroupDetails: String, 
+    $chassisNumber: String, 
+    $insurancePolicyNumber: String, 
+    $insuranceExpiry: Date
+  ) {
+    updateVehicleDetails(
+      vehicleId: $vehicleId, 
+      tinNumber: $tinNumber, 
+      engineNumber: $engineNumber, 
+      engineCapacityCc: $engineCapacityCc, 
+      isTbsInspected: $isTbsInspected, 
+      transportGroupDetails: $transportGroupDetails, 
+      chassisNumber: $chassisNumber, 
+      insurancePolicyNumber: $insurancePolicyNumber, 
+      insuranceExpiry: $insuranceExpiry
+    ) {
+      success
+      message
+      vehicle {
+        id
+      }
+    }
+  }
+`;
+
+export const CREATE_RIDER_CONTRACT = gql`
+  mutation CreateRiderContract(
+    $vehicleId: Int!, 
+    $riderId: Int!, 
+    $startDate: Date!, 
+    $expirationDate: Date!
+  ) {
+    createRiderContract(
+      vehicleId: $vehicleId, 
+      riderId: $riderId, 
+      startDate: $startDate, 
+      expirationDate: $expirationDate
+    ) {
+      success
+      message
+      contract {
+        id
+      }
+    }
+  }
+`;
+

@@ -259,7 +259,8 @@ export const GET_OWNER_STATS = gql`
       activeRiders
       avgFleetRating
       alertsCount
-      revenueData
+      weeklyRevenueData
+      dailyRevenueData
     }
   }
 `;
@@ -287,37 +288,80 @@ export const CHECK_EMAIL = gql`
   }
 `;
 
+export const GET_MY_FLEET = gql`
+  query GetMyFleet {
+    myFleet {
+      id
+      make
+      modelName
+      plateNumber
+      year
+      status
+      todayEarnings
+      targetEarnings
+      maintenanceStatus
+      chassisNumber
+      engineNumber
+      engineCapacityCc
+      tinNumber
+      isTbsInspected
+      insurancePolicyNumber
+      insuranceExpiry
+      logbook
+      insuranceDoc
+      ownershipTransferDoc
+      commercialRegistrationDoc
+      localAuthorityPermits
+      transportGroupDetails
+      assignedRider {
+        id
+        fullName
+        phone
+      }
+      contracts {
+        id
+        rider {
+          fullName
+        }
+        startDate
+        expirationDate
+        isActive
+      }
+    }
+  }
+`;
+
+export const GET_MY_RIDERS = gql`
+  query GetMyRiders {
+    myRiders {
+      id
+      fullName
+      phone
+      rating
+    }
+  }
+`;
 export const GET_MY_RIDES = gql`
   query GetMyRides {
     myRides {
       id
       pickupAddress
       destinationAddress
+      pickupLat
+      pickupLng
+      destinationLat
+      destinationLng
       status
-      baseFare
       totalFare
       finalFare
       requestedAt
       rider {
+        id
         fullName
+        phone
+        rating
+        plateNumber
       }
     }
   }
 `;
-
-// export const GET_RIDER_REQUESTS = gql`
-//   query GetRiderRequests {
-//     myRequests {
-//       id
-//       pickupAddress
-//       destinationAddress
-//       status
-//       baseFare
-//       totalFare
-//       requestedAt
-//       client {
-//         fullName
-//       }
-//     }
-//   }
-// `;
