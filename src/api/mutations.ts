@@ -194,7 +194,10 @@ export const UPDATE_VEHICLE_DETAILS = gql`
     $transportGroupDetails: String, 
     $chassisNumber: String, 
     $insurancePolicyNumber: String, 
-    $insuranceExpiry: Date
+    $insuranceExpiry: Date,
+    $logbookControlNumber: String,
+    $insuranceStickerNumber: String,
+    $latraLicenseNumber: String
   ) {
     updateVehicleDetails(
       vehicleId: $vehicleId, 
@@ -205,13 +208,57 @@ export const UPDATE_VEHICLE_DETAILS = gql`
       transportGroupDetails: $transportGroupDetails, 
       chassisNumber: $chassisNumber, 
       insurancePolicyNumber: $insurancePolicyNumber, 
-      insuranceExpiry: $insuranceExpiry
+      insuranceExpiry: $insuranceExpiry,
+      logbookControlNumber: $logbookControlNumber,
+      insuranceStickerNumber: $insuranceStickerNumber,
+      latraLicenseNumber: $latraLicenseNumber
     ) {
       success
       message
       vehicle {
         id
       }
+    }
+  }
+`;
+
+export const REGISTER_RIDER = gql`
+  mutation RegisterRider(
+    $fullName: String!,
+    $phone: String!,
+    $password: String!,
+    $email: String,
+    $licenseNumber: String,
+    $nidaNumber: String,
+    $guarantorName: String,
+    $guarantorPhone: String
+  ) {
+    registerRider(
+      fullName: $fullName,
+      phone: $phone,
+      password: $password,
+      email: $email,
+      licenseNumber: $licenseNumber,
+      nidaNumber: $nidaNumber,
+      guarantorName: $guarantorName,
+      guarantorPhone: $guarantorPhone
+    ) {
+      success
+      message
+      user {
+        id
+        fullName
+      }
+    }
+  }
+`;
+
+export const TOGGLE_RIDER_SUSPENSION = gql`
+  mutation ToggleRiderSuspension($riderId: Int!) {
+    toggleRiderSuspension(riderId: $riderId) {
+      success
+      message
+      isSuspended
     }
   }
 `;

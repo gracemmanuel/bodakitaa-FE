@@ -310,11 +310,17 @@ const StepwiseFormModal: React.FC<{ isOpen: boolean; onClose: () => void; bike: 
       if (Object.keys(files).length > 0) {
         const fileData = new FormData();
         Object.entries(files).forEach(([key, file]) => fileData.append(key, file));
-        await fetch(`${API_BASE_URL}/fleet-docs/${bike.id}/upload-docs/`, {
+        const uploadResponse = await fetch(`${API_BASE_URL}/fleet-docs/${bike.id}/upload-docs/`, {
           method: 'POST',
           headers: { 'Authorization': `JWT ${localStorage.getItem('token')}` },
           body: fileData
         });
+        
+        if (!uploadResponse.ok) {
+           const errData = await uploadResponse.json();
+           console.error("Vehicle upload failed:", errData);
+           alert("Compliance data updated, but document upload failed.");
+        }
       }
       if (result.updateVehicleDetails.success) { onSuccess(); onClose(); }
     } catch (err) { console.error(err); } finally { setIsLoading(false); }
@@ -443,11 +449,14 @@ const ContractModal: React.FC<{ isOpen: boolean; onClose: () => void; bike: Bike
       if (contractFile) {
         const fileData = new FormData();
         fileData.append('contract_doc', contractFile);
-        await fetch(`${API_BASE_URL}/fleet-docs/${contractId}/upload-contract/`, {
+        const uploadResponse = await fetch(`${API_BASE_URL}/fleet-docs/${contractId}/upload-contract/`, {
           method: 'POST',
           headers: { 'Authorization': `JWT ${localStorage.getItem('token')}` },
           body: fileData
         });
+        if (!uploadResponse.ok) {
+          alert("Contract created, but file upload failed.");
+        }
       }
       if (result.createRiderContract.success) { onSuccess(); onClose(); }
     } catch (err) { console.error(err); } finally { setIsLoading(false); }
@@ -462,11 +471,16 @@ const ContractModal: React.FC<{ isOpen: boolean; onClose: () => void; bike: Bike
         </div>
         <div className="p-10 space-y-6">
           <div className="space-y-1">
-            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Select Rider</label>
+            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Select Eligible Rider</label>
             <select value={selectedRider} onChange={e => setSelectedRider(e.target.value)} className="w-full px-6 py-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 text-slate-900 font-bold focus:outline-none focus:border-primary-light cursor-pointer">
-              <option value="">Choose a registered rider...</option>
-              {riders.map(r => <option key={r.id} value={r.id}>{r.fullName}</option>)}
+              <option value="">Choose a fully verified rider...</option>
+              {riders.filter(r => r.isFullyRegistered).map(r => <option key={r.id} value={r.id}>{r.fullName}</option>)}
             </select>
+            {riders.filter(r => !r.isFullyRegistered).length > 0 && (
+              <p className="text-[10px] font-bold text-amber-500 mt-1 flex items-center gap-1">
+                <AlertCircle size={12} /> {riders.filter(r => !r.isFullyRegistered).length} riders are hidden due to incomplete documentation.
+              </p>
+            )}
           </div>
           <div className="grid grid-cols-2 gap-4">
             <InputField label="Start Date" type="date" value={startDate} onChange={setStartDate} />

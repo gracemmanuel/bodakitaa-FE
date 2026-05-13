@@ -46,26 +46,28 @@ const NotificationDrawer: React.FC<Props> = ({ isOpen, onClose }) => {
       refetch();
       
       // Entrance animation: Simple Fade and Slide
-      gsap.to(overlayRef.current, { autoAlpha: 1, duration: 0.2, ease: 'power2.out' });
-      gsap.fromTo(panelRef.current, 
-        { opacity: 0, y: -10 },
-        { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out', force3D: true }
-      );
+      if (overlayRef.current) gsap.to(overlayRef.current, { autoAlpha: 1, duration: 0.2, ease: 'power2.out' });
+      if (panelRef.current) {
+        gsap.fromTo(panelRef.current, 
+          { opacity: 0, y: -10 },
+          { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out', force3D: true }
+        );
+      }
       
-      if (listRef.current) {
+      if (listRef.current && listRef.current.children.length > 0) {
         gsap.fromTo(listRef.current.children, 
           { y: 10, opacity: 0 }, 
           { y: 0, opacity: 1, duration: 0.3, stagger: 0.05, ease: 'power2.out', delay: 0.1 }
         );
       }
     } else {
-      gsap.to(overlayRef.current, { autoAlpha: 0, duration: 0.2, ease: 'power2.in' });
-      gsap.to(panelRef.current, { opacity: 0, y: -10, duration: 0.2, ease: 'power2.in' });
+      if (overlayRef.current) gsap.to(overlayRef.current, { autoAlpha: 0, duration: 0.2, ease: 'power2.in' });
+      if (panelRef.current) gsap.to(panelRef.current, { opacity: 0, y: -10, duration: 0.2, ease: 'power2.in' });
     }
   }, [isOpen, refetch]);
 
   useEffect(() => {
-    if (isOpen && listRef.current) {
+    if (isOpen && listRef.current && listRef.current.children.length > 0) {
       gsap.fromTo(listRef.current.children, 
         { scale: 0.98, opacity: 0 }, 
         { scale: 1, opacity: 1, duration: 0.3, stagger: 0.05, ease: 'power2.out' }

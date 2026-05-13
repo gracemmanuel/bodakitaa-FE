@@ -341,6 +341,17 @@ export const GET_MY_RIDERS = gql`
       fullName
       phone
       rating
+      isFullyRegistered
+      isSuspended
+      nidaNumber
+      guarantorName
+      guarantorPhone
+      idCardFront
+      idCardBack
+      licenseFile
+      localAuthorityLetter
+      guarantorIdFront
+      guarantorIdBack
     }
   }
 `;
