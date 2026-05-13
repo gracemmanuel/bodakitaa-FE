@@ -379,3 +379,75 @@ export const GET_MY_RIDES = gql`
     }
   }
 `;
+
+export const GET_MY_WALLET = gql`
+  query GetMyWallet {
+    myWallet {
+      id
+      balanceTzs
+      totalDebtTzs
+    }
+  }
+`;
+
+export const GET_MY_SUBMISSIONS = gql`
+  query GetMySubmissions {
+    mySubmissions {
+      id
+      amountTzs
+      expectedAmountTzs
+      submissionDate
+      status
+      comment
+      referenceNumber
+    }
+  }
+`;
+
+export const GET_RECEIVED_SUBMISSIONS = gql`
+  query GetReceivedSubmissions {
+    receivedSubmissions {
+      id
+      amountTzs
+      expectedAmountTzs
+      submissionDate
+      status
+      comment
+      referenceNumber
+      rider {
+        id
+        fullName
+        phone
+      }
+    }
+  }
+`;
+
+export const GET_MY_EXPENSES = gql`
+  query GetMyExpenses {
+    myExpenses {
+      id
+      category
+      amountTzs
+      description
+      expenseDate
+      vehicle {
+        id
+        plateNumber
+      }
+    }
+  }
+`;
+
+export const GET_MY_TRANSACTIONS = gql`
+  query GetMyTransactions {
+    myTransactions {
+      id
+      amountTzs
+      transactionType
+      status
+      description
+      createdAt
+    }
+  }
+`;

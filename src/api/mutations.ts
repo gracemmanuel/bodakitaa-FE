@@ -263,6 +263,29 @@ export const TOGGLE_RIDER_SUSPENSION = gql`
   }
 `;
 
+export const SUBMIT_DAILY_FEE = gql`
+  mutation SubmitDailyFee($input: DailySubmissionInput!) {
+    submitDailyFee(input: $input) {
+      success
+      message
+      submission {
+        id
+        amountTzs
+        submissionDate
+        status
+      }
+    }
+  }
+`;
+
+export const PROCESS_SUBMISSION = gql`
+  mutation ProcessSubmission($input: ApproveSubmissionInput!) {
+    processSubmission(input: $input) {
+      success
+      message
+    }
+  }
+`;
 export const CREATE_RIDER_CONTRACT = gql`
   mutation CreateRiderContract(
     $vehicleId: Int!, 
@@ -284,4 +307,21 @@ export const CREATE_RIDER_CONTRACT = gql`
     }
   }
 `;
+
+export const RECORD_EXPENSE = gql`
+  mutation RecordExpense($input: ExpenseInput!) {
+    recordExpense(input: $input) {
+      success
+      message
+      expense {
+        id
+        category
+        amountTzs
+        description
+        expenseDate
+      }
+    }
+  }
+`;
+
 
