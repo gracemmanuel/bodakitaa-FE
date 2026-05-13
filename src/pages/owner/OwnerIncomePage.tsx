@@ -279,7 +279,7 @@ const OwnerIncomePage: React.FC = () => {
       {isExpenseOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setIsExpenseOpen(false)} />
-           <form onSubmit={handleExpenseSubmit} className="relative w-full max-lg bg-white dark:bg-slate-900 rounded-[3.5rem] shadow-2xl border border-white/20 overflow-hidden">
+           <form onSubmit={handleExpenseSubmit} className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-[3.5rem] shadow-2xl border border-white/20 overflow-hidden">
               <div className="p-10 border-b border-slate-50 dark:border-white/5 bg-gradient-to-br from-red-500/10 to-transparent">
                  <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Record Business Expense</h3>
                  <p className="text-sm text-slate-500 font-medium mt-1">Manual outflow recording for fleet maintenance or fuel.</p>
