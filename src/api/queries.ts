@@ -313,6 +313,9 @@ export const GET_MY_FLEET = gql`
       commercialRegistrationDoc
       localAuthorityPermits
       transportGroupDetails
+      logbookControlNumber
+      insuranceStickerNumber
+      latraLicenseNumber
       assignedRider {
         id
         fullName
