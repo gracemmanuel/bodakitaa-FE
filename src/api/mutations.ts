@@ -183,3 +183,145 @@ export const RATE_RIDE = gql`
     }
   }
 `;
+
+export const UPDATE_VEHICLE_DETAILS = gql`
+  mutation UpdateVehicleDetails(
+    $vehicleId: Int!, 
+    $tinNumber: String, 
+    $engineNumber: String, 
+    $engineCapacityCc: Int, 
+    $isTbsInspected: Boolean, 
+    $transportGroupDetails: String, 
+    $chassisNumber: String, 
+    $insurancePolicyNumber: String, 
+    $insuranceExpiry: Date,
+    $logbookControlNumber: String,
+    $insuranceStickerNumber: String,
+    $latraLicenseNumber: String
+  ) {
+    updateVehicleDetails(
+      vehicleId: $vehicleId, 
+      tinNumber: $tinNumber, 
+      engineNumber: $engineNumber, 
+      engineCapacityCc: $engineCapacityCc, 
+      isTbsInspected: $isTbsInspected, 
+      transportGroupDetails: $transportGroupDetails, 
+      chassisNumber: $chassisNumber, 
+      insurancePolicyNumber: $insurancePolicyNumber, 
+      insuranceExpiry: $insuranceExpiry,
+      logbookControlNumber: $logbookControlNumber,
+      insuranceStickerNumber: $insuranceStickerNumber,
+      latraLicenseNumber: $latraLicenseNumber
+    ) {
+      success
+      message
+      vehicle {
+        id
+      }
+    }
+  }
+`;
+
+export const REGISTER_RIDER = gql`
+  mutation RegisterRider(
+    $fullName: String!,
+    $phone: String!,
+    $password: String!,
+    $email: String,
+    $licenseNumber: String,
+    $nidaNumber: String,
+    $guarantorName: String,
+    $guarantorPhone: String
+  ) {
+    registerRider(
+      fullName: $fullName,
+      phone: $phone,
+      password: $password,
+      email: $email,
+      licenseNumber: $licenseNumber,
+      nidaNumber: $nidaNumber,
+      guarantorName: $guarantorName,
+      guarantorPhone: $guarantorPhone
+    ) {
+      success
+      message
+      user {
+        id
+        fullName
+      }
+    }
+  }
+`;
+
+export const TOGGLE_RIDER_SUSPENSION = gql`
+  mutation ToggleRiderSuspension($riderId: Int!) {
+    toggleRiderSuspension(riderId: $riderId) {
+      success
+      message
+      isSuspended
+    }
+  }
+`;
+
+export const SUBMIT_DAILY_FEE = gql`
+  mutation SubmitDailyFee($input: DailySubmissionInput!) {
+    submitDailyFee(input: $input) {
+      success
+      message
+      submission {
+        id
+        amountTzs
+        submissionDate
+        status
+      }
+    }
+  }
+`;
+
+export const PROCESS_SUBMISSION = gql`
+  mutation ProcessSubmission($input: ApproveSubmissionInput!) {
+    processSubmission(input: $input) {
+      success
+      message
+    }
+  }
+`;
+export const CREATE_RIDER_CONTRACT = gql`
+  mutation CreateRiderContract(
+    $vehicleId: Int!, 
+    $riderId: Int!, 
+    $startDate: Date!, 
+    $expirationDate: Date!
+  ) {
+    createRiderContract(
+      vehicleId: $vehicleId, 
+      riderId: $riderId, 
+      startDate: $startDate, 
+      expirationDate: $expirationDate
+    ) {
+      success
+      message
+      contract {
+        id
+      }
+    }
+  }
+`;
+
+export const RECORD_EXPENSE = gql`
+  mutation RecordExpense($input: ExpenseInput!) {
+    recordExpense(input: $input) {
+      success
+      message
+      expense {
+        id
+        category
+        amountTzs
+        description
+        expenseDate
+      }
+    }
+  }
+`;
+
+
