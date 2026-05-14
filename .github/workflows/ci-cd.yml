@@ -73,8 +73,9 @@ jobs:
             docker stop bodakitaa-fe-fe-prod-1 bodakitaa-fe-fe-dev-1 2>/dev/null || true
             docker rm bodakitaa-fe-fe-prod-1 bodakitaa-fe-fe-dev-1 2>/dev/null || true
             # Deploy new container
-            docker compose -f ../docker-compose.frontend.yml pull frontend
-            docker compose -f ../docker-compose.frontend.yml up -d --remove-orphans frontend
+            docker compose -p bodakitaa-fe -f ../docker-compose.frontend.yml pull frontend
+            docker compose -p bodakitaa-fe -f ../docker-compose.frontend.yml up -d --remove-orphans
+ frontend
             echo "STAGING DEPLOYMENT SUCCESSFUL"
             docker ps | grep bodakitaa-fe
 
@@ -99,8 +100,8 @@ jobs:
             docker stop bodakitaa-fe-fe-prod-1 bodakitaa-fe-fe-dev-1 2>/dev/null || true
             docker rm bodakitaa-fe-fe-prod-1 bodakitaa-fe-fe-dev-1 2>/dev/null || true
             # Deploy new container
-            docker compose -f docker-compose.frontend.yml pull frontend
-            docker compose -f docker-compose.frontend.yml up -d frontend
+            docker compose -p bodakitaa-fe -f docker-compose.frontend.yml pull frontend
+            docker compose -p bodakitaa-fe -f docker-compose.frontend.yml up -d
             docker image prune -f
             echo "PRODUCTION DEPLOYMENT SUCCESSFUL"
 
