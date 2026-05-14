@@ -1,16 +1,19 @@
-const BASE_URL = 'http://localhost:8000/graphql/';
+const BASE_URL = 'https://bodabodabackend.tarxemo.com/graphql/';
 
-export const graphqlClient = async (query: string, variables: any = {}) => {
+export const graphqlClient = async (query: any, variables: any = {}) => {
   const token = localStorage.getItem('token');
   const headers = {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `JWT ${token}` } : {}),
   };
 
+  // If query is a DocumentNode (from gql tag), extract the string
+  const queryString = typeof query === 'string' ? query : query?.loc?.source?.body;
+
   const response = await fetch(BASE_URL, {
     method: 'POST',
     headers,
-    body: JSON.stringify({ query, variables })
+    body: JSON.stringify({ query: queryString, variables })
   });
 
   if (!response.ok) {

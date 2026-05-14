@@ -1,0 +1,9 @@
+version: "3.8"
+
+services:
+  frontend:
+    image: ${DOCKER_USERNAME}/bodakitaa-fe:latest
+    container_name: bodakitaa-fe
+    ports:
+      - "8081:80"
+    restart: unless-stopped

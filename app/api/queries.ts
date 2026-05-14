@@ -259,7 +259,8 @@ export const GET_OWNER_STATS = gql`
       activeRiders
       avgFleetRating
       alertsCount
-      revenueData
+      weeklyRevenueData
+      dailyRevenueData
     }
   }
 `;
@@ -287,21 +288,166 @@ export const CHECK_EMAIL = gql`
   }
 `;
 
+export const GET_MY_FLEET = gql`
+  query GetMyFleet {
+    myFleet {
+      id
+      make
+      modelName
+      plateNumber
+      year
+      status
+      todayEarnings
+      targetEarnings
+      maintenanceStatus
+      chassisNumber
+      engineNumber
+      engineCapacityCc
+      tinNumber
+      isTbsInspected
+      insurancePolicyNumber
+      insuranceExpiry
+      logbook
+      insuranceDoc
+      ownershipTransferDoc
+      commercialRegistrationDoc
+      localAuthorityPermits
+      transportGroupDetails
+      logbookControlNumber
+      insuranceStickerNumber
+      latraLicenseNumber
+      assignedRider {
+        id
+        fullName
+        phone
+      }
+      contracts {
+        id
+        rider {
+          fullName
+        }
+        startDate
+        expirationDate
+        isActive
+      }
+    }
+  }
+`;
+
+export const GET_MY_RIDERS = gql`
+  query GetMyRiders {
+    myRiders {
+      id
+      fullName
+      phone
+      rating
+      isFullyRegistered
+      isSuspended
+      nidaNumber
+      guarantorName
+      guarantorPhone
+      idCardFront
+      idCardBack
+      licenseFile
+      localAuthorityLetter
+      guarantorIdFront
+      guarantorIdBack
+    }
+  }
+`;
 export const GET_MY_RIDES = gql`
   query GetMyRides {
     myRides {
       id
       pickupAddress
       destinationAddress
+      pickupLat
+      pickupLng
+      destinationLat
+      destinationLng
       status
-      baseFare
       totalFare
       finalFare
       requestedAt
       rider {
+        id
         fullName
+        phone
+        rating
+        plateNumber
       }
     }
   }
 `;
 
+export const GET_MY_WALLET = gql`
+  query GetMyWallet {
+    myWallet {
+      id
+      balanceTzs
+      totalDebtTzs
+    }
+  }
+`;
+
+export const GET_MY_SUBMISSIONS = gql`
+  query GetMySubmissions {
+    mySubmissions {
+      id
+      amountTzs
+      expectedAmountTzs
+      submissionDate
+      status
+      comment
+      referenceNumber
+    }
+  }
+`;
+
+export const GET_RECEIVED_SUBMISSIONS = gql`
+  query GetReceivedSubmissions {
+    receivedSubmissions {
+      id
+      amountTzs
+      expectedAmountTzs
+      submissionDate
+      status
+      comment
+      referenceNumber
+      rider {
+        id
+        fullName
+        phone
+      }
+    }
+  }
+`;
+
+export const GET_MY_EXPENSES = gql`
+  query GetMyExpenses {
+    myExpenses {
+      id
+      category
+      amountTzs
+      description
+      expenseDate
+      vehicle {
+        id
+        plateNumber
+      }
+    }
+  }
+`;
+
+export const GET_MY_TRANSACTIONS = gql`
+  query GetMyTransactions {
+    myTransactions {
+      id
+      amountTzs
+      transactionType
+      status
+      description
+      createdAt
+    }
+  }
+`;
