@@ -74,8 +74,7 @@ jobs:
             docker rm bodakitaa-fe-fe-prod-1 bodakitaa-fe-fe-dev-1 2>/dev/null || true
             # Deploy new container
             docker compose -p bodakitaa-fe -f ../docker-compose.frontend.yml pull frontend
-            docker compose -p bodakitaa-fe -f ../docker-compose.frontend.yml up -d --remove-orphans
- frontend
+            docker compose -p bodakitaa-fe -f ../docker-compose.frontend.yml up -d --remove-orphans frontend
             echo "STAGING DEPLOYMENT SUCCESSFUL"
             docker ps | grep bodakitaa-fe
 
