@@ -1,7 +1,7 @@
 import { ApolloClient, InMemoryCache, createHttpLink, ApolloLink, concat } from '@apollo/client';
 
 const httpLink = createHttpLink({
-  uri: 'https://bodabodabackend.tarxemo.com/graphql/',
+  uri: 'http://localhost:8000/graphql/',
 });
 
 // Attach JWT token from localStorage to every request
