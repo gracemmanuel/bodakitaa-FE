@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import Nav from '../../components/Nav';
 import bodasImage from '../../assets/bodas.jpeg';
+import { graphqlClient } from '../../api/index';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -595,6 +596,126 @@ const Footer: React.FC = () => {
   );
 };
 
+const ContactSection: React.FC = () => {
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    message: ''
+  });
+  const [loading, setLoading] = useState(false);
+  const [feedback, setFeedback] = useState<{type: 'success' | 'error', message: string} | null>(null);
+
+  const CONTACT_MUTATION = `
+    mutation ContactUs($firstName: String!, $lastName: String!, $email: String!, $message: String!) {
+      contactUs(firstName: $firstName, lastName: $lastName, email: $email, message: $message) {
+        success
+        message
+      }
+    }
+  `;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.message) {
+      setFeedback({ type: 'error', message: 'Please fill in all fields' });
+      return;
+    }
+    setLoading(true);
+    setFeedback(null);
+    try {
+      const result = await graphqlClient(CONTACT_MUTATION, formData);
+      if (result.contactUs.success) {
+        setFeedback({ type: 'success', message: result.contactUs.message });
+        setFormData({ firstName: '', lastName: '', email: '', message: '' });
+      } else {
+        setFeedback({ type: 'error', message: result.contactUs.message });
+      }
+    } catch (err: any) {
+      setFeedback({ type: 'error', message: err.message || 'Something went wrong' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <section id="contact" className="py-32 px-6 bg-slate-50 dark:bg-slate-950 relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary-light/5 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-amber-500/5 rounded-full blur-[80px] pointer-events-none" />
+      
+      <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center relative z-10">
+        <div className="space-y-8">
+          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full glass border border-primary-light/20 text-xs font-bold uppercase tracking-widest text-primary-light mb-2 shadow-[0_0_20px_rgba(254,119,67,0.1)]">
+            <Mail size={16} /> Get In Touch
+          </div>
+          <h3 className="text-4xl md:text-5xl lg:text-6xl font-black text-slate-900 dark:text-white leading-tight">
+            We'd love to hear from you.
+          </h3>
+          <p className="text-lg text-slate-600 dark:text-slate-400 font-light max-w-md">
+            Whether you have a question about features, pricing, or need help, our team is ready to answer all your questions.
+          </p>
+          
+          <div className="space-y-6 pt-4">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-xl bg-primary-light/10 text-primary-light flex items-center justify-center shrink-0">
+                <MapPin size={24} />
+              </div>
+              <div>
+                <h4 className="text-lg font-bold text-slate-900 dark:text-white">Our Headquarters</h4>
+                <p className="text-slate-600 dark:text-slate-400 font-light">123 Innovation Drive, Tech Hub<br/>Dar es Salaam, Tanzania</p>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
+                <PhoneCall size={24} />
+              </div>
+              <div>
+                <h4 className="text-lg font-bold text-slate-900 dark:text-white">Call Us Directly</h4>
+                <p className="text-slate-600 dark:text-slate-400 font-light">+255 123 456 789<br/>Mon-Fri, 8am to 6pm EAT</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="glass bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl border border-white/50 dark:border-white/10 rounded-[2.5rem] p-8 md:p-12 shadow-2xl relative">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {feedback && (
+              <div className={`p-4 rounded-xl text-sm font-bold ${feedback.type === 'success' ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'}`}>
+                {feedback.message}
+              </div>
+            )}
+            <div className="grid sm:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">First Name</label>
+                <input value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} type="text" placeholder="John" className="w-full px-5 py-4 rounded-xl bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 focus:border-primary-light focus:ring-1 focus:ring-primary-light focus:outline-none transition-colors text-slate-900 dark:text-white" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Last Name</label>
+                <input value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} type="text" placeholder="Doe" className="w-full px-5 py-4 rounded-xl bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 focus:border-primary-light focus:ring-1 focus:ring-primary-light focus:outline-none transition-colors text-slate-900 dark:text-white" />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Email Address</label>
+              <input value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} type="email" placeholder="john@example.com" className="w-full px-5 py-4 rounded-xl bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 focus:border-primary-light focus:ring-1 focus:ring-primary-light focus:outline-none transition-colors text-slate-900 dark:text-white" />
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Message</label>
+              <textarea value={formData.message} onChange={e => setFormData({...formData, message: e.target.value})} rows={4} placeholder="How can we help you?" className="w-full px-5 py-4 rounded-xl bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 focus:border-primary-light focus:ring-1 focus:ring-primary-light focus:outline-none transition-colors text-slate-900 dark:text-white resize-none" />
+            </div>
+            
+            <button disabled={loading} type="submit" className="w-full py-4 bg-primary-light hover:bg-primary-dark text-white font-black rounded-xl shadow-lg shadow-primary-light/30 transition-all flex justify-center items-center gap-2 group disabled:opacity-50">
+              {loading ? 'Sending...' : 'Send Message'} <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
+  );
+};
+
 // --- Main Page Component ---
 const LandingPage: React.FC = () => {
   return (
@@ -606,6 +727,7 @@ const LandingPage: React.FC = () => {
       <StatsSection />
       <TestimonialSection />
       <FAQSection />
+      <ContactSection />
       <Footer />
     </div>
   );

@@ -7,7 +7,7 @@ import NotificationDrawer from './NotificationDrawer';
 
 interface NavProps {
   variant?: 'public' | 'dashboard';
-  role?: 'client' | 'rider' | 'owner' | 'admin';
+  role?: 'client' | 'rider' | 'employed_rider' | 'owner' | 'admin';
   onMenuClick?: () => void; // For toggling sidebar in dashboard
 }
 
@@ -53,7 +53,9 @@ const Nav: React.FC<NavProps> = ({ variant = 'public', role = 'client', onMenuCl
             {role.charAt(0)}
           </div>
           <div>
-            <h2 className="text-lg md:text-xl font-black text-slate-900 dark:text-white capitalize hidden sm:block">{role} Portal</h2>
+            <h2 className="text-lg md:text-xl font-black text-slate-900 dark:text-white capitalize hidden sm:block">
+              {role === 'employed_rider' ? 'Employed Rider' : role} Portal
+            </h2>
             <p className="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-widest hidden sm:block">BodaKitaa System</p>
           </div>
         </div>
@@ -112,7 +114,7 @@ const Nav: React.FC<NavProps> = ({ variant = 'public', role = 'client', onMenuCl
 
       <div className="flex items-center gap-4 lg:gap-8">
         <div className="hidden lg:flex gap-8 text-sm font-medium">
-          <Link to="/" className="text-slate-700 dark:text-slate-300 hover:text-primary-light dark:hover:text-primary-light transition-colors">{t('nav.home')}</Link>
+          <Link to="/" onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})} className="text-slate-700 dark:text-slate-300 hover:text-primary-light dark:hover:text-primary-light transition-colors">{t('nav.home')}</Link>
           <a href="#features" className="text-slate-700 dark:text-slate-300 hover:text-primary-light dark:hover:text-primary-light transition-colors">{t('nav.about')}</a>
           <a href="#contact" className="text-slate-700 dark:text-slate-300 hover:text-primary-light dark:hover:text-primary-light transition-colors">{t('nav.contact')}</a>
         </div>
@@ -167,7 +169,7 @@ const Nav: React.FC<NavProps> = ({ variant = 'public', role = 'client', onMenuCl
           </div>
 
           <div className="flex flex-col gap-8 relative z-10">
-            <Link to="/" className="text-2xl font-black text-slate-900 dark:text-white flex items-center justify-between group" onClick={() => setIsMobileMenuOpen(false)}>
+            <Link to="/" className="text-2xl font-black text-slate-900 dark:text-white flex items-center justify-between group" onClick={() => { setIsMobileMenuOpen(false); window.scrollTo({top: 0, behavior: 'smooth'}); }}>
               {t('nav.home')}
               <ArrowRight className="opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-primary-light" />
             </Link>

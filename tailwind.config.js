@@ -20,6 +20,12 @@ export default {
       },
       backdropBlur: {
         xs: "2px",
+      },
+      keyframes: {
+        dash: {
+          '0%': { transform: 'translateX(0)' },
+          '100%': { transform: 'translateX(-50%)' },
+        }
       }
     },
   },

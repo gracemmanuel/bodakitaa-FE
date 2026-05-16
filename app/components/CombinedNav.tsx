@@ -5,7 +5,7 @@ import GlobalRideConfirmation from './GlobalRideConfirmation';
 
 interface CombinedNavProps {
   children: React.ReactNode;
-  role: 'client' | 'rider' | 'owner' | 'admin';
+  role: 'client' | 'rider' | 'employed_rider' | 'owner' | 'admin';
 }
 
 const CombinedNav: React.FC<CombinedNavProps> = ({ children, role }) => {

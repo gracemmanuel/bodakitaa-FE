@@ -63,12 +63,14 @@ const LoginPage: React.FC = () => {
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
 
-  const isEmailValid = email.length > 0 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const isEmailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const isPhoneFormat = /^\+?[\d\s-]{8,}$/.test(email);
+  const isIdentifierValid = email.length > 0 && (isEmailFormat || isPhoneFormat);
   const isPasswordValid = password.length >= 6;
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isEmailValid || !isPasswordValid) {
+    if (!isIdentifierValid || !isPasswordValid) {
       setError("Please check your credentials and try again.");
       return;
     }
@@ -102,6 +104,7 @@ const LoginPage: React.FC = () => {
       if (role === 'admin') navigate('/dashboard/admin');
       else if (role === 'owner') navigate('/dashboard/owner');
       else if (role === 'rider') navigate('/dashboard/rider');
+      else if (role === 'employed_rider') navigate('/dashboard/employed_rider');
       else navigate('/dashboard/client');
 
     } catch (err: any) {
@@ -148,17 +151,17 @@ const LoginPage: React.FC = () => {
               <div className="space-y-2 relative">
                 <div className="flex justify-between items-center">
                   <label className={`text-xs font-black uppercase tracking-wider ml-1 transition-colors ${emailFocused ? 'text-primary-light' : 'text-slate-500'}`}>
-                    {t('auth.email')}
+                    Email or Phone
                   </label>
                   {email.length > 0 && (
-                    <span className={`text-xs font-bold flex items-center gap-1 ${isEmailValid ? 'text-green-500' : 'text-red-500'}`}>
-                      {isEmailValid ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
-                      {isEmailValid ? 'Valid' : 'Invalid format'}
+                    <span className={`text-xs font-bold flex items-center gap-1 ${isIdentifierValid ? 'text-green-500' : 'text-red-500'}`}>
+                      {isIdentifierValid ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
+                      {isIdentifierValid ? (isEmailFormat ? 'Email Valid' : 'Phone Valid') : 'Invalid format'}
                     </span>
                   )}
                 </div>
                 <div className={`relative flex items-center border-2 rounded-2xl transition-all duration-300 bg-slate-50 dark:bg-slate-950/50 ${emailFocused ? 'border-primary-light shadow-[0_0_0_4px_rgba(254,119,67,0.1)]' :
-                    email.length > 0 && !isEmailValid ? 'border-red-300 dark:border-red-500/30' :
+                    email.length > 0 && !isIdentifierValid ? 'border-red-300 dark:border-red-500/30' :
                       'border-slate-200 dark:border-slate-800'
                   }`}>
                   <div className="pl-4 pr-3 flex items-center justify-center pointer-events-none">
@@ -171,7 +174,7 @@ const LoginPage: React.FC = () => {
                     onFocus={() => setEmailFocused(true)}
                     onBlur={() => setEmailFocused(false)}
                     className="flex-1 py-4 pr-4 bg-transparent outline-none text-slate-900 dark:text-white placeholder:text-slate-400 font-medium text-base"
-                    placeholder="name@example.com"
+                    placeholder="Email or Phone Number"
                     required
                   />
                 </div>
@@ -233,9 +236,9 @@ const LoginPage: React.FC = () => {
 
               <button
                 type="submit"
-                disabled={isLoading || !isEmailValid || !isPasswordValid}
+                disabled={isLoading || !isIdentifierValid || !isPasswordValid}
                 className={`w-full py-4 text-lg font-black rounded-2xl flex items-center justify-center gap-3 transition-all duration-300 mt-8 relative overflow-hidden group
-                  ${(!isEmailValid || !isPasswordValid)
+                  ${(!isIdentifierValid || !isPasswordValid)
                     ? 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
                     : 'bg-primary-light text-white shadow-[0_15px_30px_-10px_rgba(254,119,67,0.5)] hover:shadow-[0_20px_40px_-10px_rgba(254,119,67,0.6)] hover:-translate-y-1'
                   }`}

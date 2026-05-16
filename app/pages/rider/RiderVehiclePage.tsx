@@ -10,6 +10,10 @@ import CombinedNav from '../../components/CombinedNav';
 import gsap from 'gsap';
 
 const RiderVehiclePage: React.FC = () => {
+  const userString = localStorage.getItem('user');
+  const user = userString ? JSON.parse(userString) : null;
+  const role = user?.role || 'rider';
+
   const { data, loading } = useQuery(GET_RIDER_VEHICLE, {
     fetchPolicy: 'cache-and-network',
   });
@@ -29,7 +33,7 @@ const RiderVehiclePage: React.FC = () => {
   const fuelLogs = data?.myFuelLogs || [];
 
   return (
-    <CombinedNav role="rider">
+    <CombinedNav role={role as any}>
       <div className="max-w-7xl mx-auto space-y-8" ref={contentRef}>
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
@@ -45,103 +49,125 @@ const RiderVehiclePage: React.FC = () => {
         </div>
 
         {/* Vehicle Overview Card */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
-            <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[2.5rem] p-8 relative overflow-hidden group shadow-xl">
-               <div className="absolute top-0 right-0 w-80 h-80 bg-primary-light/5 rounded-bl-full -mr-20 -mt-20 group-hover:scale-110 transition-transform duration-700" />
-               
-               <div className="flex flex-col md:flex-row gap-8 items-center relative z-10">
-                  <div className="w-full md:w-64 h-48 bg-slate-100 dark:bg-white/5 rounded-3xl flex items-center justify-center relative overflow-hidden border border-slate-200 dark:border-white/10">
-                     <Bike size={80} className="text-primary-light/40" />
-                     <div className="absolute bottom-4 left-4 bg-primary-light text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
-                        {vehicle?.plateNumber || 'N/A'}
+        {!vehicle && !loading ? (
+          <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[3rem] p-16 flex flex-col items-center justify-center text-center space-y-6 shadow-2xl relative overflow-hidden">
+            <div className="absolute inset-0 bg-primary-light/5 blur-3xl rounded-full translate-y-1/2" />
+            <div className="w-24 h-24 rounded-3xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-300 dark:text-slate-700 relative z-10">
+              <Bike size={48} />
+            </div>
+            <div className="space-y-2 relative z-10">
+              <h2 className="text-3xl font-black text-slate-900 dark:text-white">No Assigned Vehicle</h2>
+              <p className="text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+                {role === 'employed_rider' 
+                  ? "Your fleet manager hasn't assigned a motorcycle to you yet. Please contact your boss to get started." 
+                  : "You haven't registered a vehicle yet. Please add your motorcycle to start tracking maintenance and fuel."}
+              </p>
+            </div>
+            {role === 'rider' && (
+              <button className="px-8 py-4 bg-primary-light text-white rounded-2xl font-black shadow-lg shadow-primary-light/30 hover:scale-105 transition-all relative z-10">
+                Register My Vehicle
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2">
+              <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[2.5rem] p-8 relative overflow-hidden group shadow-xl">
+                 <div className="absolute top-0 right-0 w-80 h-80 bg-primary-light/5 rounded-bl-full -mr-20 -mt-20 group-hover:scale-110 transition-transform duration-700" />
+                 
+                 <div className="flex flex-col md:flex-row gap-8 items-center relative z-10">
+                    <div className="w-full md:w-64 h-48 bg-slate-100 dark:bg-white/5 rounded-3xl flex items-center justify-center relative overflow-hidden border border-slate-200 dark:border-white/10">
+                       <Bike size={80} className="text-primary-light/40" />
+                       <div className="absolute bottom-4 left-4 bg-primary-light text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
+                          {vehicle?.plateNumber || 'N/A'}
+                       </div>
+                    </div>
+  
+                    <div className="flex-1 space-y-6">
+                       <div>
+                          <div className="flex items-center gap-3 mb-2">
+                             <h2 className="text-3xl font-black text-slate-900 dark:text-white">{vehicle?.make || 'Honda'} {vehicle?.modelName || 'BM 150'}</h2>
+                             <span className="px-3 py-1 bg-green-500/10 text-green-500 rounded-full text-xs font-black uppercase tracking-widest border border-green-500/20">
+                                {vehicle?.status || 'Active'}
+                             </span>
+                          </div>
+                          <p className="text-slate-500 dark:text-slate-400 font-medium">Assigned on <span className="font-bold text-slate-700 dark:text-slate-200">{vehicle?.createdAt ? new Date(vehicle.createdAt).toLocaleDateString() : 'N/A'}</span></p>
+                       </div>
+  
+                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                          <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5">
+                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1"><Gauge size={12} /> Odometer</p>
+                             <p className="text-lg font-black text-slate-900 dark:text-white">{vehicle?.odometerKm || '0'} km</p>
+                          </div>
+                          <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5">
+                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1"><Droplet size={12} /> Fuel Type</p>
+                             <p className="text-lg font-black text-slate-900 dark:text-white capitalize">{vehicle?.fuelType || 'Petrol'}</p>
+                          </div>
+                          <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5">
+                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1"><Calendar size={12} /> Year</p>
+                             <p className="text-lg font-black text-slate-900 dark:text-white">{vehicle?.year || '2023'}</p>
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+              </div>
+            </div>
+  
+            {/* Maintenance Status */}
+            <div className="lg:col-span-1">
+               <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[2.5rem] p-8 h-full shadow-xl">
+                  <h3 className="text-xl font-black text-slate-900 dark:text-white mb-6 flex items-center gap-2">
+                     <Settings size={22} className="text-primary-light" /> Health Check
+                  </h3>
+  
+                  <div className="space-y-6">
+                     <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 rounded-2xl">
+                        <div className="flex items-center gap-3">
+                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${vehicle?.maintenanceStatus === 'Good' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+                              <CheckCircle2 size={20} />
+                           </div>
+                           <div>
+                              <p className="font-bold text-sm text-slate-700 dark:text-slate-200">Engine</p>
+                              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{vehicle?.maintenanceStatus === 'Good' ? 'Normal Performance' : 'Check Required'}</p>
+                           </div>
+                        </div>
+                        <span className={`text-[10px] font-black uppercase tracking-widest ${vehicle?.maintenanceStatus === 'Good' ? 'text-green-500' : 'text-red-500'}`}>{vehicle?.maintenanceStatus === 'Good' ? 'Optimal' : 'Issues'}</span>
+                     </div>
+  
+                     <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 rounded-2xl">
+                        <div className="flex items-center gap-3">
+                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${vehicle?.lastOilChangeKm < 1500 ? 'bg-green-500/10 text-green-500' : 'bg-amber-500/10 text-amber-500'}`}>
+                              <Droplet size={20} />
+                           </div>
+                           <div>
+                              <p className="font-bold text-sm text-slate-700 dark:text-slate-200">Oil Level</p>
+                              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Last change: {vehicle?.lastOilChangeKm?.toFixed(0)} km ago</p>
+                           </div>
+                        </div>
+                        <span className={`text-[10px] font-black uppercase tracking-widest ${vehicle?.lastOilChangeKm < 1500 ? 'text-green-500' : 'text-amber-500'}`}>{vehicle?.lastOilChangeKm < 1500 ? 'Good' : 'Check Soon'}</span>
+                     </div>
+  
+                     <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 rounded-2xl">
+                        <div className="flex items-center gap-3">
+                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${vehicle?.daysToInsuranceExpiry > 30 ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+                              <Shield size={20} />
+                           </div>
+                           <div>
+                              <p className="font-bold text-sm text-slate-700 dark:text-slate-200">Insurance</p>
+                              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Expires in {vehicle?.daysToInsuranceExpiry} days</p>
+                           </div>
+                        </div>
+                        <span className={`text-[10px] font-black uppercase tracking-widest ${vehicle?.daysToInsuranceExpiry > 30 ? 'text-blue-500' : 'text-red-500'}`}>{vehicle?.daysToInsuranceExpiry > 30 ? 'Valid' : 'Near Expiry'}</span>
                      </div>
                   </div>
-
-                  <div className="flex-1 space-y-6">
-                     <div>
-                        <div className="flex items-center gap-3 mb-2">
-                           <h2 className="text-3xl font-black text-slate-900 dark:text-white">{vehicle?.make || 'Honda'} {vehicle?.modelName || 'BM 150'}</h2>
-                           <span className="px-3 py-1 bg-green-500/10 text-green-500 rounded-full text-xs font-black uppercase tracking-widest border border-green-500/20">
-                              {vehicle?.status || 'Active'}
-                           </span>
-                        </div>
-                        <p className="text-slate-500 dark:text-slate-400 font-medium">Assigned on <span className="font-bold text-slate-700 dark:text-slate-200">{vehicle?.createdAt ? new Date(vehicle.createdAt).toLocaleDateString() : 'N/A'}</span></p>
-                     </div>
-
-                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                        <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5">
-                           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1"><Gauge size={12} /> Odometer</p>
-                           <p className="text-lg font-black text-slate-900 dark:text-white">{vehicle?.odometerKm || '0'} km</p>
-                        </div>
-                        <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5">
-                           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1"><Droplet size={12} /> Fuel Type</p>
-                           <p className="text-lg font-black text-slate-900 dark:text-white capitalize">{vehicle?.fuelType || 'Petrol'}</p>
-                        </div>
-                        <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5">
-                           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1"><Calendar size={12} /> Year</p>
-                           <p className="text-lg font-black text-slate-900 dark:text-white">{vehicle?.year || '2023'}</p>
-                        </div>
-                     </div>
-                  </div>
+  
+                  <button className="w-full mt-8 py-4 bg-slate-900 dark:bg-white/10 text-white font-black text-sm rounded-2xl hover:bg-primary-light transition-all">
+                     View Full Logs
+                  </button>
                </div>
             </div>
           </div>
-
-          {/* Maintenance Status */}
-          <div className="lg:col-span-1">
-             <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[2.5rem] p-8 h-full shadow-xl">
-                <h3 className="text-xl font-black text-slate-900 dark:text-white mb-6 flex items-center gap-2">
-                   <Settings size={22} className="text-primary-light" /> Health Check
-                </h3>
-
-                <div className="space-y-6">
-                   <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 rounded-2xl">
-                      <div className="flex items-center gap-3">
-                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${vehicle?.maintenanceStatus === 'Good' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
-                            <CheckCircle2 size={20} />
-                         </div>
-                         <div>
-                            <p className="font-bold text-sm text-slate-700 dark:text-slate-200">Engine</p>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{vehicle?.maintenanceStatus === 'Good' ? 'Normal Performance' : 'Check Required'}</p>
-                         </div>
-                      </div>
-                      <span className={`text-[10px] font-black uppercase tracking-widest ${vehicle?.maintenanceStatus === 'Good' ? 'text-green-500' : 'text-red-500'}`}>{vehicle?.maintenanceStatus === 'Good' ? 'Optimal' : 'Issues'}</span>
-                   </div>
-
-                   <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 rounded-2xl">
-                      <div className="flex items-center gap-3">
-                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${vehicle?.lastOilChangeKm < 1500 ? 'bg-green-500/10 text-green-500' : 'bg-amber-500/10 text-amber-500'}`}>
-                            <Droplet size={20} />
-                         </div>
-                         <div>
-                            <p className="font-bold text-sm text-slate-700 dark:text-slate-200">Oil Level</p>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Last change: {vehicle?.lastOilChangeKm?.toFixed(0)} km ago</p>
-                         </div>
-                      </div>
-                      <span className={`text-[10px] font-black uppercase tracking-widest ${vehicle?.lastOilChangeKm < 1500 ? 'text-green-500' : 'text-amber-500'}`}>{vehicle?.lastOilChangeKm < 1500 ? 'Good' : 'Check Soon'}</span>
-                   </div>
-
-                   <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 rounded-2xl">
-                      <div className="flex items-center gap-3">
-                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${vehicle?.daysToInsuranceExpiry > 30 ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
-                            <Shield size={20} />
-                         </div>
-                         <div>
-                            <p className="font-bold text-sm text-slate-700 dark:text-slate-200">Insurance</p>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Expires in {vehicle?.daysToInsuranceExpiry} days</p>
-                         </div>
-                      </div>
-                      <span className={`text-[10px] font-black uppercase tracking-widest ${vehicle?.daysToInsuranceExpiry > 30 ? 'text-blue-500' : 'text-red-500'}`}>{vehicle?.daysToInsuranceExpiry > 30 ? 'Valid' : 'Near Expiry'}</span>
-                   </div>
-                </div>
-
-                <button className="w-full mt-8 py-4 bg-slate-900 dark:bg-white/10 text-white font-black text-sm rounded-2xl hover:bg-primary-light transition-all">
-                   View Full Logs
-                </button>
-             </div>
-          </div>
-        </div>
+        )}
 
         {/* Bottom Grid: Fuel Logs & Documents */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

@@ -253,6 +253,7 @@ const StepwiseFormModal = ({ isOpen, onClose, onSuccess }: any) => {
             alert("Rider registered, but document upload failed. Please update them later.");
           }
         }
+        alert(`Rider Onboarded Successfully!\n\nThey can now login using:\nPhone: ${formData.phone}\nPassword: ${formData.password}`);
         onSuccess();
       } else {
         alert(result.registerRider.message);

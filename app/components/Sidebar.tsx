@@ -3,11 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, Bike, Users, Wallet, FileBarChart, 
-  Settings, LogOut, MapPin, ClipboardList, X, Star
+  Settings, LogOut, MapPin, ClipboardList, X, Star, Target
 } from 'lucide-react';
 
 interface SidebarProps {
-  role: 'client' | 'rider' | 'owner' | 'admin';
+  role: 'client' | 'rider' | 'employed_rider' | 'owner' | 'admin';
   closeSidebar?: () => void;
 }
 
@@ -30,6 +30,15 @@ const Sidebar: React.FC<SidebarProps> = ({ role, closeSidebar }) => {
       { path: '/dashboard/rider/history', icon: ClipboardList, label: t('dashboard.rides') },
       { path: '/dashboard/rider/vehicle', icon: Bike, label: 'My Vehicle' },
       { path: '/dashboard/rider/profile', icon: Settings, label: 'Profile' },
+    ],
+    employed_rider: [
+      { path: '/dashboard/employed_rider', icon: LayoutDashboard, label: 'Overview' },
+      { path: '/dashboard/employed_rider/requests', icon: MapPin, label: 'My Requests' },
+      { path: '/dashboard/employed_rider/earnings', icon: Wallet, label: 'Earnings' },
+      { path: '/dashboard/employed_rider/boss', icon: Target, label: 'Boss Report', highlight: true },
+      { path: '/dashboard/employed_rider/history', icon: ClipboardList, label: 'Ride History' },
+      { path: '/dashboard/employed_rider/vehicle', icon: Bike, label: 'My Vehicle' },
+      { path: '/dashboard/employed_rider/profile', icon: Settings, label: 'Profile' },
     ],
     owner: [
       { path: '/dashboard/owner', icon: LayoutDashboard, label: t('dashboard.overview') },
@@ -76,11 +85,16 @@ const Sidebar: React.FC<SidebarProps> = ({ role, closeSidebar }) => {
               className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 ${
                 isActive 
                   ? 'bg-primary-light text-white shadow-lg shadow-primary-light/30' 
+                  : (item as any).highlight && !isActive
+                  ? 'text-primary-light bg-primary-light/10 hover:bg-primary-light hover:text-white'
                   : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/5 hover:text-primary-light dark:hover:text-primary-light'
               }`}
             >
               <item.icon size={20} />
               <span className="font-bold text-sm">{item.label}</span>
+              {(item as any).highlight && !isActive && (
+                <span className="ml-auto text-[9px] font-black bg-primary-light text-white px-2 py-0.5 rounded-full uppercase tracking-widest">New</span>
+              )}
             </Link>
           );
         })}
