@@ -1,4 +1,4 @@
-const BASE_URL = 'https://bodabodabackend.tarxemo.com/graphql/';
+const BASE_URL = 'http://localhost:8000/graphql/';
 
 export const graphqlClient = async (query: any, variables: any = {}) => {
   const token = localStorage.getItem('token');

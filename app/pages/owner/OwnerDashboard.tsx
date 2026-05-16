@@ -9,7 +9,7 @@ import {
 import CombinedNav from '../../components/CombinedNav';
 import { getTimeBasedGreeting } from '../../utils/greeting';
 import { graphqlClient } from '../../api';
-import { GET_OWNER_STATS } from '../../api/queries';
+import { GET_OWNER_STATS, GET_MY_RIDERS } from '../../api/queries';
 
 // --- Types ---
 interface BikeData {
@@ -222,7 +222,116 @@ const AddBikeModal: React.FC<AddBikeModalProps> = ({ isOpen, onClose, onSuccess 
   );
 };
 
-const BikeManagementTable: React.FC<{ bikes: BikeData[], onAddBike: () => void }> = ({ bikes, onAddBike }) => {
+interface AssignRiderModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+  vehicleId: string | null;
+}
+
+const AssignRiderModal: React.FC<AssignRiderModalProps> = ({ isOpen, onClose, onSuccess, vehicleId }) => {
+  const [selectedRider, setSelectedRider] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const { data, loading: ridersLoading } = useQuery(GET_MY_RIDERS, {
+    skip: !isOpen,
+    fetchPolicy: 'network-only',
+  });
+
+  if (!isOpen) return null;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedRider || !vehicleId) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    const mutation = `
+      mutation AssignRider($vehicleId: Int!, $riderId: Int!) {
+        assignRider(vehicleId: $vehicleId, riderId: $riderId) {
+          success
+          message
+        }
+      }
+    `;
+
+    try {
+      const result = await graphqlClient(mutation, {
+        vehicleId: parseInt(vehicleId),
+        riderId: parseInt(selectedRider)
+      });
+
+      if (result.assignRider.success) {
+        onSuccess();
+        onClose();
+        setSelectedRider('');
+      } else {
+        setError(result.assignRider.message);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to assign rider');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-300">
+        <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900">
+          <h3 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <Users className="text-primary-light" /> Assign Rider
+          </h3>
+          <button onClick={onClose} className="p-2 bg-slate-200 dark:bg-slate-800 rounded-full text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors">
+            <X size={20} />
+          </button>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {error && (
+            <div className="p-3 bg-red-50 dark:bg-red-500/10 text-red-600 text-sm font-bold rounded-xl flex items-center gap-2">
+              <AlertTriangle size={16} /> {error}
+            </div>
+          )}
+          
+          <div className="space-y-1">
+            <label className="text-xs font-bold text-slate-500 uppercase">Select Rider</label>
+            {ridersLoading ? (
+              <div className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 text-slate-500 text-sm">Loading riders...</div>
+            ) : (
+              <div className="relative">
+                <select 
+                  required 
+                  value={selectedRider} 
+                  onChange={e => setSelectedRider(e.target.value)} 
+                  className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 focus:border-primary-light focus:outline-none transition-colors text-slate-900 dark:text-white appearance-none"
+                >
+                  <option value="" disabled>-- Select a rider --</option>
+                  {data?.myRiders?.map((rider: any) => (
+                    <option key={rider.id} value={rider.id}>
+                      {rider.fullName} ({rider.phone})
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-400">
+                  <ChevronDown size={16} />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <button type="submit" disabled={isLoading || ridersLoading || !selectedRider} className="w-full py-4 mt-6 bg-primary-light hover:bg-primary-dark disabled:opacity-50 text-white font-black rounded-xl shadow-lg shadow-primary-light/30 transition-all flex justify-center items-center gap-2">
+            {isLoading ? 'Assigning...' : <><CheckCircle size={20} /> Confirm Assignment</>}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+const BikeManagementTable: React.FC<{ bikes: BikeData[], onAddBike: () => void, onAssignRider: (vehicleId: string) => void }> = ({ bikes, onAddBike, onAssignRider }) => {
   const [activeTab, setActiveTab] = useState<'all' | 'active' | 'maintenance'>('all');
 
   const filteredBikes = bikes.filter(b => {
@@ -305,11 +414,11 @@ const BikeManagementTable: React.FC<{ bikes: BikeData[], onAddBike: () => void }
                       </div>
                       <div>
                         <p className="text-sm font-bold text-slate-900 dark:text-white">{bike.assignedRider.fullName}</p>
-                        <button className="text-[10px] font-bold text-primary-light hover:underline uppercase mt-0.5">Change Assignment</button>
+                        <button onClick={() => onAssignRider(bike.id)} className="text-[10px] font-bold text-primary-light hover:underline uppercase mt-0.5">Change Assignment</button>
                       </div>
                     </div>
                   ) : (
-                    <button className="px-3 py-1.5 rounded-lg border border-dashed border-slate-300 dark:border-white/20 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-primary-light hover:border-primary-light transition-colors">
+                    <button onClick={() => onAssignRider(bike.id)} className="px-3 py-1.5 rounded-lg border border-dashed border-slate-300 dark:border-white/20 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-primary-light hover:border-primary-light transition-colors">
                       + Assign Rider
                     </button>
                   )}
@@ -371,6 +480,7 @@ const OwnerDashboard: React.FC = () => {
   const [user, setUser] = useState<any>(null);
   const [bikes, setBikes] = useState<BikeData[]>([]);
   const [isAddBikeOpen, setIsAddBikeOpen] = useState(false);
+  const [assignRiderVehicleId, setAssignRiderVehicleId] = useState<string | null>(null);
 
   const { data: statsData, loading: statsLoading, refetch: refetchStats } = useQuery(GET_OWNER_STATS, {
     fetchPolicy: 'cache-and-network',
@@ -442,7 +552,7 @@ const OwnerDashboard: React.FC = () => {
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
           <div className="xl:col-span-2">
-            <BikeManagementTable bikes={bikes} onAddBike={() => setIsAddBikeOpen(true)} />
+            <BikeManagementTable bikes={bikes} onAddBike={() => setIsAddBikeOpen(true)} onAssignRider={(id) => setAssignRiderVehicleId(id)} />
           </div>
 
           <div className="xl:col-span-1 space-y-8">
@@ -486,6 +596,12 @@ const OwnerDashboard: React.FC = () => {
         isOpen={isAddBikeOpen} 
         onClose={() => setIsAddBikeOpen(false)} 
         onSuccess={() => { fetchDashboardData(); refetchStats(); }}
+      />
+      <AssignRiderModal
+        isOpen={!!assignRiderVehicleId}
+        onClose={() => setAssignRiderVehicleId(null)}
+        onSuccess={() => { fetchDashboardData(); refetchStats(); }}
+        vehicleId={assignRiderVehicleId}
       />
     </CombinedNav>
   );
